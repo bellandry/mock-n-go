@@ -7,7 +7,7 @@ datasource db {
 }
 
 model User {
-  id            String    @id
+  id            String       @id
   name          String
   email         String
   emailVerified Boolean
@@ -17,6 +17,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
   members       Member[]
+  mocks         MockConfig[]
 
   invitations Invitation[]
 
@@ -85,6 +86,7 @@ model Organization {
   members     Member[]
   invitations Invitation[]
   sessions    Session[]
+  mocks       MockConfig[]
 
   @@map("organization")
 }
@@ -122,4 +124,96 @@ model Invitation {
   @@index([email])
   @@index([organizationId])
   @@map("invitation")
+}
+
+model MockConfig {
+  id       String @id @default(uuid())
+  name     String // Nom descriptif du mock
+  basePath String // Le chemin de base (ex: "users", "products")
+
+  // Relations
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdById    String
+  createdBy      User         @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  // Endpoints par méthode HTTP
+  endpoints MockEndpoint[]
+
+  // Métadonnées générales
+  description String?
+  isActive    Boolean @default(true)
+  accessCount Int     @default(0)
+
+  // Dates
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  expiresAt      DateTime?
+  lastAccessedAt DateTime?
+
+  @@unique([organizationId, basePath])
+  @@index([organizationId])
+  @@index([createdById])
+  @@index([isActive])
+  @@map("mock_config")
+}
+
+model MockEndpoint {
+  id           String     @id @default(uuid())
+  mockConfigId String
+  mockConfig   MockConfig @relation(fields: [mockConfigId], references: [id], onDelete: Cascade)
+
+  // Méthode HTTP
+  method HttpMethod // GET, POST, PUT, PATCH, DELETE
+
+  // Configuration spécifique à la méthode
+  responseType ResponseType @default(JSON) // JSON, XML, TEXT, HTML
+  statusCode   Int          @default(200) // Code de réponse par défaut
+
+  // Pour GET: configuration de la liste
+  fields     Json? // Champs à générer (pour GET)
+  count      Int?    @default(10)
+  pagination Boolean @default(true)
+
+  // Pour POST/PUT/PATCH: validation et réponse
+  requestSchema  Json? // Schema de validation du body (JSON Schema)
+  responseSchema Json? // Schema de la réponse
+
+  // Comportement
+  randomErrors Boolean @default(false)
+  errorRate    Int     @default(0)
+  delay        Int? // Délai de réponse en ms
+
+  // Custom response (optionnel)
+  customResponse Json? // Réponse personnalisée statique
+
+  // Métadonnées
+  isActive    Boolean @default(true)
+  accessCount Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([mockConfigId, method])
+  @@index([mockConfigId])
+  @@index([method])
+  @@map("mock_endpoint")
+}
+
+enum HttpMethod {
+  GET
+  POST
+  PUT
+  PATCH
+  DELETE
+  OPTIONS
+  HEAD
+}
+
+enum ResponseType {
+  JSON
+  XML
+  TEXT
+  HTML
+  BINARY
 }
