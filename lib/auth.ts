@@ -52,8 +52,10 @@ export const auth = betterAuth({
       create: {
         after: async (user) => {
           // Automatically create an organization for the new user
-          const organizationName = `${user.name}'s organisation`;
-          const organizationSlug = `${user.name.toLowerCase().replace(/\s+/g, '-')}-org-${Date.now()}`;
+          const organizationName = user.name ? `${user.name}'s organisation` : "My Organisation";
+          const organizationSlug = user.name 
+            ? `${user.name.toLowerCase().replace(/\s+/g, '-')}-org-${Date.now()}`
+            : `org-${Date.now()}`;
         
           try {
             // Create organization directly in the database

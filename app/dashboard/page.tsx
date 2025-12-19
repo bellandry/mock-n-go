@@ -13,6 +13,10 @@ export default function DashboardPage() {
     if (!isPending && !session?.user) {
       router.push("/sign-in");
     }
+    // Redirect to wizard if user doesn't have a name
+    if (!isPending && session?.user && !session.user.name) {
+      router.push("/wizard");
+    }
   }, [isPending, session, router]);
 
   if (isPending)
