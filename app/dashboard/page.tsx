@@ -1,11 +1,36 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
-import { useSession } from "@/lib/auth-client";
-import { Activity, Users, Zap } from "lucide-react";
+import {
+    authClient,
+    useActiveOrganization,
+    useSession
+} from "@/lib/auth-client";
+import { Activity, Loader2, Users, Zap } from "lucide-react";
+import * as React from "react";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const { data: activeOrg, isPending: isActivePending } = useActiveOrganization();
+  const [memberCount, setMemberCount] = React.useState<number | null>(null);
+  const [isMembersLoading, setIsMembersLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (activeOrg?.id) {
+      setIsMembersLoading(true);
+      authClient.organization.listMembers({
+        query: {
+          organizationId: activeOrg.id
+        }
+      }).then(res => {
+        if (res.data) {
+          setMemberCount(res.data.total);
+        }
+      }).finally(() => {
+        setIsMembersLoading(false);
+      });
+    }
+  }, [activeOrg?.id]);
 
   if (!session?.user) return null;
 
@@ -15,9 +40,15 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Welcome Section */}
       <div>
-        <h1 className="text-3xl font-bold mb-2">Welcome back, {user.name}!</h1>
+        <h1 className="text-3xl font-bold mb-2">
+          Welcome back, {user.name}!
+        </h1>
         <p className="text-muted-foreground">
-          Here's what's happening with your mock APIs today.
+          {activeOrg ? (
+            <>Manage your mock APIs for <span className="text-foreground font-semibold">{activeOrg.name}</span></>
+          ) : (
+            <>Here's what's happening with your mock APIs today.</>
+          )}
         </p>
       </div>
 
@@ -54,7 +85,13 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Team Members</p>
-              <p className="text-2xl font-bold">1</p>
+              <p className="text-2xl font-bold">
+                {isMembersLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                ) : (
+                  memberCount ?? 1
+                )}
+              </p>
             </div>
           </div>
         </Card>

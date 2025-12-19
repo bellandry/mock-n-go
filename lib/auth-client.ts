@@ -1,8 +1,6 @@
 import { magicLinkClient, oneTapClient, organizationClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
-export const { signOut, useSession } = createAuthClient();
-
 export const authClient = createAuthClient({
   plugins: [
     magicLinkClient(),
@@ -24,3 +22,12 @@ export const authClient = createAuthClient({
     organizationClient(),
   ],
 });
+
+export const { 
+  useSession, 
+  signIn, 
+  signOut, 
+  useActiveOrganization, 
+  useListOrganizations,
+  useActiveMember
+} = authClient;
