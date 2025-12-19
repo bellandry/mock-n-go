@@ -2,6 +2,7 @@ import db from "@/lib/prisma";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { magicLink, oneTap, organization } from "better-auth/plugins";
+import { sendMagicLinkEmail } from "./email";
 
 export const auth = betterAuth({
   database: prismaAdapter(db, {
@@ -25,8 +26,14 @@ export const auth = betterAuth({
   plugins: [
     magicLink({
       sendMagicLink: async ({ email, token, url }, ctx) => {
-        // send email to user
-        console.log(email, token, url);
+        // Get the user name from database
+        const user = await db.user.findUnique({
+          where: { email: email },
+        });
+        const name = user ? user.name : undefined;
+
+        // Send the magic link email
+        await sendMagicLinkEmail(email, name, url);
       },
     }),
     oneTap(),
