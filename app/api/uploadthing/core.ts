@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import db from "@/lib/prisma";
 import { headers } from "next/headers";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
@@ -25,6 +26,12 @@ export const ourFileRouter = {
       // This code RUNS ON YOUR SERVER after upload
       console.log("Upload complete for userId:", metadata.userId);
       console.log("file url", file.url);
+
+      // Update user's profile image in database
+      const updatedUser = await db.user.update({
+        where: { id: metadata.userId },
+        data: { image: file.url },
+      });
 
       // Return data to the client
       return { uploadedBy: metadata.userId, url: file.url };

@@ -18,26 +18,28 @@ model User {
   accounts      Account[]
   members       Member[]
 
+  invitations Invitation[]
+
   @@unique([email])
   @@map("user")
 }
 
 model Session {
-  id                    String   @id
-  expiresAt             DateTime
-  token                 String
-  createdAt             DateTime
-  updatedAt             DateTime
-  ipAddress             String?
-  userAgent             String?
-  userId                String
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  activeOrganizationId  String?
-  organization          Organization? @relation(fields: [activeOrganizationId], references: [id])
+  id                   String        @id
+  expiresAt            DateTime
+  token                String
+  createdAt            DateTime
+  updatedAt            DateTime
+  ipAddress            String?
+  userAgent            String?
+  userId               String
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeOrganizationId String?
+  organization         Organization? @relation(fields: [activeOrganizationId], references: [id])
 
   @@unique([token])
-  @@map("session")
   @@index([userId])
+  @@map("session")
 }
 
 model Account {
@@ -56,8 +58,8 @@ model Account {
   createdAt             DateTime
   updatedAt             DateTime
 
-  @@map("account")
   @@index([userId])
+  @@map("account")
 }
 
 model Verification {
@@ -68,21 +70,21 @@ model Verification {
   createdAt  DateTime?
   updatedAt  DateTime?
 
-  @@map("verification")
   @@index([identifier])
+  @@map("verification")
 }
 
 model Organization {
-  id        String    @id
-  name      String
-  slug      String?   @unique
-  logo      String?
-  metadata  String?
-  createdAt DateTime
-  updatedAt DateTime
-  members   Member[]
+  id          String       @id
+  name        String
+  slug        String?      @unique
+  logo        String?
+  metadata    String?
+  createdAt   DateTime
+  updatedAt   DateTime
+  members     Member[]
   invitations Invitation[]
-  sessions  Session[]
+  sessions    Session[]
 
   @@map("organization")
 }
@@ -98,9 +100,9 @@ model Member {
   updatedAt      DateTime
 
   @@unique([organizationId, userId])
-  @@map("member")
   @@index([userId])
   @@index([organizationId])
+  @@map("member")
 }
 
 model Invitation {
@@ -112,11 +114,12 @@ model Invitation {
   status         String
   expiresAt      DateTime
   inviterId      String
+  inviter        User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
   createdAt      DateTime
   updatedAt      DateTime
 
   @@unique([organizationId, email])
-  @@map("invitation")
   @@index([email])
   @@index([organizationId])
+  @@map("invitation")
 }
