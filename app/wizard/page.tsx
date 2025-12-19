@@ -6,13 +6,40 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toastManager } from "@/components/ui/toast";
 import { useSession } from "@/lib/auth-client";
+import { useUploadThing } from "@/lib/uploadthing";
+import { Upload, User } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { updateUserName } from "./actions";
 
 export default function WizardPage() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  
+  const { startUpload } = useUploadThing("profileImage", {
+    onClientUploadComplete: (res) => {
+      if (res && res[0]) {
+        setProfileImage(res[0].url);
+        toastManager.add({
+          type: "success",
+          title: "Photo uploaded",
+          description: "Your profile photo has been uploaded successfully",
+        });
+      }
+      setIsUploading(false);
+    },
+    onUploadError: (error: Error) => {
+      toastManager.add({
+        type: "error",
+        title: "Upload failed",
+        description: error.message,
+      });
+      setIsUploading(false);
+    },
+  });
+
   const [state, formAction, isPendingAction] = useActionState(
     async (_prevState: any, formData: FormData) => {
       return await updateUserName(formData);
@@ -44,6 +71,14 @@ export default function WizardPage() {
     }
   }, [state, router]);
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    await startUpload([file]);
+  };
+
   if (isPending) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -73,9 +108,52 @@ export default function WizardPage() {
         </div>
 
         <form action={formAction} className="space-y-6">
+          {/* Profile Photo Upload */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">
+              Profile Photo (Optional)
+            </Label>
+            <div className="flex flex-col items-center gap-4">
+              {/* Avatar Preview */}
+              <div className="relative w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border-2 border-gray-200">
+                {profileImage ? (
+                  <img
+                    src={profileImage}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-12 h-12 text-gray-400" />
+                )}
+              </div>
+
+              {/* Upload Button */}
+              <label htmlFor="photo-upload">
+                <div className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                  <Upload className="w-4 h-4" />
+                  <span className="text-sm font-medium">
+                    {isUploading ? "Uploading..." : "Upload Photo"}
+                  </span>
+                </div>
+                <input
+                  id="photo-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  disabled={isUploading || isPendingAction}
+                  className="hidden"
+                />
+              </label>
+
+              {/* Hidden input to pass image URL to form */}
+              <input type="hidden" name="image" value={profileImage || ""} />
+            </div>
+          </div>
+
+          {/* Name Input */}
           <div className="space-y-2">
             <Label htmlFor="name" className="text-sm font-medium">
-              What's your name?
+              What's your name? *
             </Label>
             <Input
               id="name"
@@ -95,7 +173,7 @@ export default function WizardPage() {
 
           <Button
             type="submit"
-            disabled={isPendingAction}
+            disabled={isPendingAction || isUploading}
             className="w-full"
           >
             {isPendingAction ? "Saving..." : "Continue to Dashboard"}
