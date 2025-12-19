@@ -1,4 +1,4 @@
-import { magicLinkClient, oneTapClient } from "better-auth/client/plugins";
+import { magicLinkClient, oneTapClient, organizationClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
 export const { signOut, useSession } = createAuthClient();
@@ -21,5 +21,6 @@ export const authClient = createAuthClient({
         maxAttempts: 5, // Maximum number of attempts before triggering onPromptNotification (default: 5)
       },
     }),
+    organizationClient(),
   ],
 });
