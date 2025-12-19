@@ -1,0 +1,33 @@
+import { magicLinkClient, oneTapClient, organizationClient } from "better-auth/client/plugins";
+import { createAuthClient } from "better-auth/react";
+
+export const authClient = createAuthClient({
+  plugins: [
+    magicLinkClient(),
+    oneTapClient({
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      // Optional client configuration:
+      autoSelect: true,
+      cancelOnTapOutside: true,
+      context: "signin",
+      additionalOptions: {
+        // Any extra options for the Google initialize method
+      },
+      // Configure prompt behavior and exponential backoff:
+      promptOptions: {
+        baseDelay: 1000, // Base delay in ms (default: 1000)
+        maxAttempts: 5, // Maximum number of attempts before triggering onPromptNotification (default: 5)
+      },
+    }),
+    organizationClient(),
+  ],
+});
+
+export const { 
+  useSession, 
+  signIn, 
+  signOut, 
+  useActiveOrganization, 
+  useListOrganizations,
+  useActiveMember
+} = authClient;
