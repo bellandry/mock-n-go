@@ -17,6 +17,7 @@ export default function WizardPage() {
   const { data: session, isPending } = useSession();
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const hasTemporaryEmail = session?.user?.email?.endsWith("@temp.mockngo.com");
   
   const { startUpload } = useUploadThing("profileImage", {
     onClientUploadComplete: (res) => {
@@ -52,7 +53,7 @@ export default function WizardPage() {
       router.push("/sign-in");
     }
     // If user already has a name, redirect to dashboard
-    if (!isPending && session?.user?.name) {
+    if (!isPending && session?.user?.name && !session?.user?.email?.endsWith("@temp.mockngo.com")) {
       router.push("/dashboard");
     }
   }, [isPending, session, router]);
@@ -164,12 +165,34 @@ export default function WizardPage() {
               className="w-full"
               autoFocus
             />
-            {state?.error && (
-              <div className="w-full p-4 border border-red-500 rounded-xl bg-red-50">
-                <p className="text-red-500 text-xs font-medium">{state.error}</p>
-              </div>
-            )}
           </div>
+
+          {/* Email Input - Only show for temporary emails */}
+          {hasTemporaryEmail && (
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium">
+                Email Address (Optional)
+              </Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Enter your email"
+                defaultValue={session.user.email}
+                disabled={isPendingAction}
+                className="w-full"
+              />
+              <p className="text-xs text-gray-500">
+                We detected you're using a temporary email. You can update it here.
+              </p>
+            </div>
+          )}
+
+          {state?.error && (
+            <div className="w-full p-4 border border-red-500 rounded-xl bg-red-50">
+              <p className="text-red-500 text-xs font-medium">{state.error}</p>
+            </div>
+          )}
 
           <Button
             type="submit"

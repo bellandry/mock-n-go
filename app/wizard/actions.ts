@@ -17,6 +17,7 @@ export async function updateUserName(formData: FormData) {
 
     const name = formData.get("name") as string;
     const image = formData.get("image") as string | null;
+    const email = formData.get("email") as string | null;
 
     if (!name || name.trim().length === 0) {
       return {
@@ -27,12 +28,13 @@ export async function updateUserName(formData: FormData) {
 
     const trimmedName = name.trim();
 
-    // Update the user's name and optionally the image
+    // Update the user's name, optionally the image, and optionally the email
     await db.user.update({
       where: { id: session.user.id },
       data: { 
         name: trimmedName,
         ...(image && { image }),
+        ...(email && email.trim() && { email: email.trim() }),
       },
     });
 

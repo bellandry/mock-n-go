@@ -21,6 +21,38 @@ export const auth = betterAuth({
     github: {
       clientId: process.env.GITHUB_CLIENT_ID as string,
       clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+      scopes: ["user:email", "read:user"],
+      getUserInfo: async (token) => {
+        console.log("le token", token)
+        const profileRes = await fetch("https://api.github.com/user", {
+            headers: { Authorization: `Bearer ${token.accessToken}` }
+        });
+        const profile = await profileRes.json();
+        console.log("le profile", profile)
+        if (!profile.email) {
+            const emailsRes = await fetch("https://api.github.com/user/emails", {
+                headers: { Authorization: `Bearer ${token.accessToken}` }
+            });
+            const emails = await emailsRes.json();
+            
+            // Ensure emails is an array before using .find()
+            if (Array.isArray(emails) && emails.length > 0) {
+                const primaryEmail = emails.find((e: any) => e.primary) || emails[0];
+                profile.email = primaryEmail?.email;
+            }
+        }
+
+        return {
+            user: {
+                id: profile.id,
+                email: profile.email || `${profile.id}@temp.mockngo.com`,
+                name: profile.name || profile.login,
+                image: profile.avatar_url,
+                emailVerified: !!profile.email,
+            },
+            data: {}
+        };
+      },
     },
   },
   plugins: [
@@ -83,7 +115,7 @@ export const auth = betterAuth({
           } catch (error) {
             console.error("Error creating organization for new user:", error);
           }
-        },
+        }
       }
     }
   },
