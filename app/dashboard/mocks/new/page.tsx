@@ -4,14 +4,19 @@ import { MockFormBasicInfo } from "@/components/mocks/mock-form/MockFormBasicInf
 import { MockFormFields } from "@/components/mocks/mock-form/MockFormFields";
 import { MockFormPreview } from "@/components/mocks/mock-form/MockFormPreview";
 import { MockFormResponseConfig } from "@/components/mocks/mock-form/MockFormResponseConfig";
+import { FreeTierBadge } from "@/components/ui/free-tier-badge";
 import { toastManager } from "@/components/ui/toast";
 import { useMockForm } from "@/hooks/useMockForm";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function NewMockPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeMockLimit, setActiveMockLimit] = useState<{
+    current: number;
+    limit: number;
+  } | null>(null);
 
   const {
     formData,
@@ -24,6 +29,14 @@ export default function NewMockPage() {
     updatePreview,
     validateForm,
   } = useMockForm();
+
+  // Fetch active mock count
+  useEffect(() => {
+    fetch("/api/mock/limits")
+      .then((res) => res.json())
+      .then((data) => setActiveMockLimit(data))
+      .catch((err) => console.error("Error fetching limits:", err));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,6 +100,10 @@ export default function NewMockPage() {
         </p>
       </div>
 
+      {activeMockLimit && (
+        <FreeTierBadge activeMocks={activeMockLimit} />
+      )}
+
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Configuration */}
         <div className="space-y-6">
@@ -112,7 +129,7 @@ export default function NewMockPage() {
             onRefresh={() => updatePreview()}
             onSubmit={() => handleSubmit}
             onCancel={() => router.back()}
-            isSubmitting={isSubmitting}
+            isSubmitting={isSubmitting || (activeMockLimit?.current ?? 0) >= (activeMockLimit?.limit ?? 5)}
             fieldsCount={fields.length}
             submitLabel="Create Mock API"
           />

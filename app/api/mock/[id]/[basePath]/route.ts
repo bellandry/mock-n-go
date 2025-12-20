@@ -1,4 +1,5 @@
 import { generateMockData, paginateData } from "@/lib/faker-generator";
+import { checkRateLimit, incrementRequestCount } from "@/lib/free-tier-limits";
 import {
   createResource,
   getResourceCount,
@@ -55,6 +56,23 @@ export async function GET(
       );
     }
 
+    // Check rate limit (100 requests/day for free tier - applies to entire mock)
+    const rateLimit = await checkRateLimit(mockConfig.id);
+    if (!rateLimit.allowed) {
+      const headers = new Headers();
+      headers.set("X-RateLimit-Limit", rateLimit.limit.toString());
+      headers.set("X-RateLimit-Remaining", "0");
+      headers.set("X-RateLimit-Reset", rateLimit.resetsAt?.toISOString() || "");
+      headers.set("X-Powered-By", "Mock-n-Go Free Tier");
+
+      return NextResponse.json(
+        {
+          error: `Rate limit exceeded. Free tier allows ${rateLimit.limit} requests per day per mock (all methods combined). Resets at ${rateLimit.resetsAt?.toISOString()}`,
+        },
+        { status: 429, headers }
+      );
+    }
+
     // Simulate random errors if enabled
     if (endpoint.randomErrors && endpoint.errorRate > 0) {
       const shouldError = Math.random() * 100 < endpoint.errorRate;
@@ -99,27 +117,35 @@ export async function GET(
         })
         .catch((err) => console.error("Error updating access count:", err));
 
-      db.mockEndpoint
-        .update({
-          where: { id: endpoint.id },
-          data: {
-            accessCount: { increment: 1 },
-          },
-        })
-        .catch((err) => console.error("Error updating endpoint access count:", err));
+      // Increment rate limit counter
+      incrementRequestCount(mockConfig.id).catch((err: any) =>
+        console.error("Error updating rate limit:", err)
+      );
+
+      // Add watermark header
+      const headers = new Headers();
+      headers.set("X-Powered-By", "Mock-n-Go Free Tier");
+      headers.set("X-RateLimit-Limit", rateLimit.limit.toString());
+      headers.set(
+        "X-RateLimit-Remaining",
+        Math.max(0, rateLimit.limit - rateLimit.current - 1).toString()
+      );
 
       if (endpoint.pagination) {
-        return NextResponse.json({
-          data,
-          pagination: {
-            page,
-            limit,
-            total: result.total,
-            totalPages: Math.ceil(result.total / limit),
+        return NextResponse.json(
+          {
+            data,
+            pagination: {
+              page,
+              limit,
+              total: result.total,
+              totalPages: Math.ceil(result.total / limit),
+            },
           },
-        });
+          { headers }
+        );
       } else {
-        return NextResponse.json({ data });
+        return NextResponse.json({ data }, { headers });
       }
     }
 
@@ -139,21 +165,26 @@ export async function GET(
       })
       .catch((err) => console.error("Error updating access count:", err));
 
-    db.mockEndpoint
-      .update({
-        where: { id: endpoint.id },
-        data: {
-          accessCount: { increment: 1 },
-        },
-      })
-      .catch((err) => console.error("Error updating endpoint access count:", err));
+    // Increment rate limit counter
+    incrementRequestCount(mockConfig.id).catch((err: any) =>
+      console.error("Error updating rate limit:", err)
+    );
+
+    // Add watermark header
+    const headers = new Headers();
+    headers.set("X-Powered-By", "Mock-n-Go Free Tier");
+    headers.set("X-RateLimit-Limit", rateLimit.limit.toString());
+    headers.set(
+      "X-RateLimit-Remaining",
+      Math.max(0, rateLimit.limit - rateLimit.current - 1).toString()
+    );
 
     // Return paginated or full data
     if (endpoint.pagination) {
       const paginatedResult = paginateData(data, page, limit);
-      return NextResponse.json(paginatedResult);
+      return NextResponse.json(paginatedResult, { headers });
     } else {
-      return NextResponse.json({ data });
+      return NextResponse.json({ data }, { headers });
     }
   } catch (error) {
     console.error("Error serving mock data:", error);
@@ -208,6 +239,23 @@ export async function POST(
       );
     }
 
+    // Check rate limit (100 requests/day for free tier - applies to entire mock)
+    const rateLimit = await checkRateLimit(mockConfig.id);
+    if (!rateLimit.allowed) {
+      const headers = new Headers();
+      headers.set("X-RateLimit-Limit", rateLimit.limit.toString());
+      headers.set("X-RateLimit-Remaining", "0");
+      headers.set("X-RateLimit-Reset", rateLimit.resetsAt?.toISOString() || "");
+      headers.set("X-Powered-By", "Mock-n-Go Free Tier");
+
+      return NextResponse.json(
+        {
+          error: `Rate limit exceeded. Free tier allows ${rateLimit.limit} requests per day per mock (all methods combined). Resets at ${rateLimit.resetsAt?.toISOString()}`,
+        },
+        { status: 429, headers }
+      );
+    }
+
     // Parse request body
     const body = await req.json();
 
@@ -246,7 +294,21 @@ export async function POST(
         })
         .catch((err) => console.error("Error updating endpoint access count:", err));
 
-      return NextResponse.json(resource, { status: 201 });
+      // Increment rate limit counter
+      incrementRequestCount(mockConfig.id).catch((err: any) =>
+        console.error("Error updating rate limit:", err)
+      );
+
+      // Add watermark header
+      const headers = new Headers();
+      headers.set("X-Powered-By", "Mock-n-Go Free Tier");
+      headers.set("X-RateLimit-Limit", rateLimit.limit.toString());
+      headers.set(
+        "X-RateLimit-Remaining",
+        Math.max(0, rateLimit.limit - rateLimit.current - 1).toString()
+      );
+
+      return NextResponse.json(resource, { status: 201, headers });
     } catch (createError: any) {
       // Check if it's a free tier limit error
       if (createError.message?.includes("Free tier limit")) {

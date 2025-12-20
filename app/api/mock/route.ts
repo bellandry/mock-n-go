@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { checkActiveMockLimit, getFreeTierExpiration } from "@/lib/free-tier-limits";
 import db from "@/lib/prisma";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
@@ -21,6 +22,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "No active organization" },
         { status: 400 }
+      );
+    }
+
+    // Check free tier active mock limit
+    const mockLimit = await checkActiveMockLimit(activeOrganizationId);
+    if (!mockLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: `Free tier limit reached. You can only have ${mockLimit.limit} active mocks simultaneously. Current: ${mockLimit.current}/${mockLimit.limit}`,
+        },
+        { status: 403 }
       );
     }
 
@@ -73,7 +85,7 @@ export async function POST(req: NextRequest) {
         description,
         organizationId: activeOrganizationId,
         createdById: session.user.id,
-        expiresAt: expiresAt ? new Date(expiresAt) : null,
+        expiresAt: getFreeTierExpiration(), // Auto-expire after 24 hours for free tier
         endpoints: {
           create: [
             // GET endpoint - for listing/retrieving resources
