@@ -210,6 +210,7 @@ export interface MockConfig {
   accessCount: number;
   createdAt: string;
   updatedAt: string;
+  expiresAt?: string;
   lastAccessedAt?: string;
   mockUrl: string;
   endpoints: Array<{

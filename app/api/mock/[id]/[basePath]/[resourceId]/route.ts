@@ -25,6 +25,9 @@ export async function GET(
         basePath,
         isActive: true,
       },
+      include: {
+        
+      }
     });
 
     if (!mockConfig) {
