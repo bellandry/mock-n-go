@@ -233,19 +233,30 @@ export async function POST(
     const fields = (getEndpoint?.fields as unknown as Field[]) ?? [];
 
     // Create resource
-    const resource = await createResource(mockConfig.id, body, fields);
+    try {
+      const resource = await createResource(mockConfig.id, body, fields);
 
-    // Update access metrics
-    db.mockEndpoint
-      .update({
-        where: { id: endpoint.id },
-        data: {
-          accessCount: { increment: 1 },
-        },
-      })
-      .catch((err) => console.error("Error updating endpoint access count:", err));
+      // Update access metrics
+      db.mockEndpoint
+        .update({
+          where: { id: endpoint.id },
+          data: {
+            accessCount: { increment: 1 },
+          },
+        })
+        .catch((err) => console.error("Error updating endpoint access count:", err));
 
-    return NextResponse.json(resource, { status: 201 });
+      return NextResponse.json(resource, { status: 201 });
+    } catch (createError: any) {
+      // Check if it's a free tier limit error
+      if (createError.message?.includes("Free tier limit")) {
+        return NextResponse.json(
+          { error: createError.message },
+          { status: 403 }
+        );
+      }
+      throw createError;
+    }
   } catch (error) {
     console.error("Error creating resource:", error);
     return NextResponse.json(

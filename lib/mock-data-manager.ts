@@ -2,6 +2,9 @@ import { Field } from "../types/mock";
 import { generateFieldValue } from "./faker-generator";
 import db from "./prisma";
 
+// Free tier limit for users without subscription
+const FREE_TIER_LIMIT = 50;
+
 /**
  * Generate a resource ID based on field configuration
  */
@@ -28,6 +31,14 @@ export async function createResource(
   data: any,
   fields: Field[]
 ): Promise<any> {
+  // Check free tier limit
+  const currentCount = await getResourceCount(mockConfigId);
+  if (currentCount >= FREE_TIER_LIMIT) {
+    throw new Error(
+      `Free tier limit reached. You can only store up to ${FREE_TIER_LIMIT} records per mock. Upgrade your plan for unlimited storage.`
+    );
+  }
+
   // Generate resource ID
   const resourceId = generateResourceId(fields);
 
@@ -73,8 +84,21 @@ export async function seedRandomData(
   fields: Field[],
   count: number
 ): Promise<any[]> {
+  // Check free tier limit
+  const currentCount = await getResourceCount(mockConfigId);
+  const availableSlots = FREE_TIER_LIMIT - currentCount;
+  
+  if (availableSlots <= 0) {
+    throw new Error(
+      `Free tier limit reached. You can only store up to ${FREE_TIER_LIMIT} records per mock.`
+    );
+  }
+  
+  // Limit the count to available slots
+  const actualCount = Math.min(count, availableSlots);
+  
   const { generateMockData } = await import("./faker-generator");
-  const mockData = generateMockData(fields, count);
+  const mockData = generateMockData(fields, actualCount);
   
   const createdResources = [];
   

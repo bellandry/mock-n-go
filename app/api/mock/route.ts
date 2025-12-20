@@ -124,8 +124,21 @@ export async function POST(req: NextRequest) {
 
     // Seed random data if requested
     if (seedData && seedCount > 0) {
-      const { seedRandomData } = await import("@/lib/mock-data-manager");
-      await seedRandomData(mockConfig.id, fields, Math.min(seedCount, 10));
+      try {
+        const { seedRandomData } = await import("@/lib/mock-data-manager");
+        await seedRandomData(mockConfig.id, fields, Math.min(seedCount, 10));
+      } catch (seedError: any) {
+        // If seeding fails due to limit, delete the mock and return error
+        if (seedError.message?.includes("Free tier limit")) {
+          await db.mockConfig.delete({ where: { id: mockConfig.id } });
+          return NextResponse.json(
+            { error: seedError.message },
+            { status: 403 }
+          );
+        }
+        // For other errors, log but continue (mock is created without seed data)
+        console.error("Error seeding data:", seedError);
+      }
     }
 
     // Generate the mock URL
