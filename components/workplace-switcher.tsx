@@ -27,9 +27,11 @@ import {
   Check,
   ChevronsUpDown,
   LogOut,
-  Plus
+  Plus,
+  User
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import * as React from "react";
 import { toastManager } from "./ui/toast";
 
@@ -73,6 +75,8 @@ export function WorkplaceSwitcher() {
       await authClient.organization.setActive({
         organizationId: orgId,
       });
+      // Save to localStorage
+      localStorage.setItem('activeOrganizationId', orgId);
     } catch (error) {
       console.error(error);
       toastManager.add({
@@ -82,6 +86,34 @@ export function WorkplaceSwitcher() {
       });
     }
   };
+
+  // Auto-select organization on mount
+  React.useEffect(() => {
+    if (!organizations || organizations.length === 0 || isListPending) return;
+
+    // If there's already an active org, save it to localStorage
+    if (activeOrg?.id) {
+      localStorage.setItem('activeOrganizationId', activeOrg.id);
+      return;
+    }
+
+    // No active org, try to restore from localStorage
+    const savedOrgId = localStorage.getItem('activeOrganizationId');
+    
+    if (savedOrgId) {
+      // Check if saved org still exists
+      const orgExists = organizations.find(org => org.id === savedOrgId);
+      if (orgExists) {
+        handleSwitchOrg(savedOrgId);
+        return;
+      }
+    }
+
+    // No saved org or saved org doesn't exist, select first organization
+    if (organizations.length > 0) {
+      handleSwitchOrg(organizations[0].id);
+    }
+  }, [organizations, activeOrg, isListPending]);
 
   if (isActivePending || isListPending || !session?.user) {
     return (
@@ -190,6 +222,14 @@ export function WorkplaceSwitcher() {
                     {session.user.email}
                   </span>
                 </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="gap-2 p-2 focus-destructive"
+              >
+                <Link href="/dashboard/profile" className="flex items-center gap-2">
+                  <User className="size-4" />
+                  <span>Profile</span>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => signOut()}

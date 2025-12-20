@@ -1,12 +1,14 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-    authClient,
-    useActiveOrganization,
-    useSession
+  authClient,
+  useActiveOrganization,
+  useSession
 } from "@/lib/auth-client";
-import { Activity, Loader2, Users, Zap } from "lucide-react";
+import { Activity, Loader2, Plus, Users, Zap } from "lucide-react";
+import Link from "next/link";
 import * as React from "react";
 
 export default function DashboardPage() {
@@ -14,6 +16,8 @@ export default function DashboardPage() {
   const { data: activeOrg, isPending: isActivePending } = useActiveOrganization();
   const [memberCount, setMemberCount] = React.useState<number | null>(null);
   const [isMembersLoading, setIsMembersLoading] = React.useState(false);
+  const [mockStats, setMockStats] = React.useState({ activeMocks: 0, totalCalls: 0 });
+  const [isMocksLoading, setIsMocksLoading] = React.useState(false);
 
   React.useEffect(() => {
     if (activeOrg?.id) {
@@ -29,6 +33,18 @@ export default function DashboardPage() {
       }).finally(() => {
         setIsMembersLoading(false);
       });
+
+      // Fetch mock statistics
+      setIsMocksLoading(true);
+      fetch("/api/mock")
+        .then(res => res.json())
+        .then(mocks => {
+          const activeMocks = mocks.filter((m: any) => m.isActive).length;
+          const totalCalls = mocks.reduce((sum: number, m: any) => sum + m.accessCount, 0);
+          setMockStats({ activeMocks, totalCalls });
+        })
+        .catch(err => console.error("Error fetching mocks:", err))
+        .finally(() => setIsMocksLoading(false));
     }
   }, [activeOrg?.id]);
 
@@ -61,7 +77,13 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Active Mocks</p>
-              <p className="text-2xl font-bold">0</p>
+              <p className="text-2xl font-bold">
+                {isMocksLoading ? (
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                ) : (
+                  mockStats.activeMocks
+                )}
+              </p>
             </div>
           </div>
         </Card>
@@ -73,7 +95,13 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">API Calls</p>
-              <p className="text-2xl font-bold">0</p>
+              <p className="text-2xl font-bold">
+                {isMocksLoading ? (
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                ) : (
+                  mockStats.totalCalls.toLocaleString()
+                )}
+              </p>
             </div>
           </div>
         </Card>
@@ -100,9 +128,19 @@ export default function DashboardPage() {
       {/* Quick Actions */}
       <Card className="p-6 bg-white/5 backdrop-blur-sm border-white/10">
         <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-        <p className="text-muted-foreground">
-          Get started by creating your first mock API or updating your profile.
-        </p>
+        <div className="flex gap-3">
+          <Link href="/dashboard/mocks/new">
+            <Button>
+              <Plus className="w-4 h-4" />
+              Create Mock API
+            </Button>
+          </Link>
+          <Link href="/dashboard/mocks">
+            <Button variant="outline">
+              View All Mocks
+            </Button>
+          </Link>
+        </div>
       </Card>
     </div>
   );
