@@ -90,6 +90,7 @@ export default function MockDetailPage() {
       <div className="space-y-6 max-w-6xl w-full mx-auto">
         {/* Header */}
         <MockHeader
+          mockId={mock.id}
           name={mock.name}
           description={mock.description}
           isActive={mock.isActive}

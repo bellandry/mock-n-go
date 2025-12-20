@@ -31,15 +31,15 @@ export default async function DashboardLayout({
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
-          <div className="flex fixed top-0 border-b w-full bg-white/10 backdrop-blur-md z-10 p-4 items-center gap-3">
+        <header className="flex h-16 shrink-0 items-center justify-between gap-2">
+          <div className="flex fixed top-0 border-b w-full bg-white/10 backdrop-blur-md z-10 py-2 items-center gap-3 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="h-6 my-auto" />
             <ModeToggle />
           </div>
           {/* <UserNav /> */}
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
+        <div className="flex flex-1 flex-col gap-4 p-4 md:p-6 max-w-7xl w-full mx-auto">
           {children}
         </div>
       </SidebarInset>

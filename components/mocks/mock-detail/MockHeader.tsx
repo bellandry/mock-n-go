@@ -1,8 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Trash2 } from "lucide-react";
+import { Edit, Loader2, Trash2 } from "lucide-react";
+import Link from "next/link";
 
 interface MockHeaderProps {
+  mockId: string;
   name: string;
   description?: string | null;
   isActive: boolean;
@@ -11,6 +13,7 @@ interface MockHeaderProps {
 }
 
 export function MockHeader({
+  mockId,
   name,
   description,
   isActive,
@@ -38,6 +41,12 @@ export function MockHeader({
         )}
       </div>
       <div className="flex gap-2">
+        <Link href={`/dashboard/mocks/${mockId}/edit`}>
+          <Button variant="outline">
+            <Edit className="w-4 h-4" />
+            Edit
+          </Button>
+        </Link>
         <Button
           variant="outline"
           onClick={onDelete}
