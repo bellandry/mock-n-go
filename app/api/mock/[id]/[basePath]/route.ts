@@ -1,10 +1,17 @@
 import { generateMockData, paginateData } from "@/lib/faker-generator";
-import db from "@/lib/prisma";
-import { Field } from "@/types/mock";
+import {
+    createResource,
+    getResourceCount,
+    getResources,
+} from "@/lib/mock-data-manager";
+import { prisma } from "@/lib/prisma";
+import { validateRequest } from "@/lib/request-validator";
+import { Field } from "@/lib/types/mock";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/mock/[id]/[basePath] - Serve mock data
+ * Returns stored data if available, otherwise generates with Faker
  * Supports pagination via query params: ?page=1&limit=10
  */
 export async function GET(
@@ -15,7 +22,7 @@ export async function GET(
     const { id, basePath } = await params;
 
     // Find mock config
-    const mockConfig = await db.mockConfig.findFirst({
+    const mockConfig = await prisma.mockConfig.findFirst({
       where: {
         id,
         basePath,
@@ -72,13 +79,57 @@ export async function GET(
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "10", 10);
 
-    // Generate mock data
-    const fields = endpoint.fields ?? [] as Field[];
+    // Check if we have stored data
+    const storedCount = await getResourceCount(mockConfig.id);
+    let data: any[];
+
+    if (storedCount > 0) {
+      // Use stored data
+      const result = await getResources(mockConfig.id, page, limit);
+      data = result.data;
+      
+      // Update access metrics (fire and forget)
+      prisma.mockConfig
+        .update({
+          where: { id: mockConfig.id },
+          data: {
+            accessCount: { increment: 1 },
+            lastAccessedAt: new Date(),
+          },
+        })
+        .catch((err) => console.error("Error updating access count:", err));
+
+      prisma.mockEndpoint
+        .update({
+          where: { id: endpoint.id },
+          data: {
+            accessCount: { increment: 1 },
+          },
+        })
+        .catch((err) => console.error("Error updating endpoint access count:", err));
+
+      if (endpoint.pagination) {
+        return NextResponse.json({
+          data,
+          pagination: {
+            page,
+            limit,
+            total: result.total,
+            totalPages: Math.ceil(result.total / limit),
+          },
+        });
+      } else {
+        return NextResponse.json({ data });
+      }
+    }
+
+    // No stored data, generate with Faker
+    const fields = (endpoint.fields ?? []) as Field[];
     const count = endpoint.count || 10;
-    const data = generateMockData(fields as Field[], count);
+    data = generateMockData(fields, count);
 
     // Update access metrics (fire and forget)
-    db.mockConfig
+    prisma.mockConfig
       .update({
         where: { id: mockConfig.id },
         data: {
@@ -88,7 +139,7 @@ export async function GET(
       })
       .catch((err) => console.error("Error updating access count:", err));
 
-    db.mockEndpoint
+    prisma.mockEndpoint
       .update({
         where: { id: endpoint.id },
         data: {
@@ -106,6 +157,97 @@ export async function GET(
     }
   } catch (error) {
     console.error("Error serving mock data:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/mock/[id]/[basePath] - Create a new resource
+ */
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string; basePath: string }> }
+) {
+  try {
+    const { id, basePath } = await params;
+
+    // Find mock config
+    const mockConfig = await prisma.mockConfig.findFirst({
+      where: {
+        id,
+        basePath,
+        isActive: true,
+      },
+      include: {
+        endpoints: {
+          where: {
+            method: "POST",
+            isActive: true,
+          },
+        },
+      },
+    });
+
+    if (!mockConfig || mockConfig.endpoints.length === 0) {
+      return NextResponse.json(
+        { error: "POST endpoint not found or inactive" },
+        { status: 404 }
+      );
+    }
+
+    const endpoint = mockConfig.endpoints[0];
+
+    // Check if mock has expired
+    if (mockConfig.expiresAt && new Date() > mockConfig.expiresAt) {
+      return NextResponse.json(
+        { error: "Mock endpoint has expired" },
+        { status: 410 }
+      );
+    }
+
+    // Parse request body
+    const body = await req.json();
+
+    // Validate against request schema if defined
+    if (endpoint.requestSchema) {
+      const validation = validateRequest(body, endpoint.requestSchema);
+      if (!validation.valid) {
+        return NextResponse.json(
+          { error: "Validation failed", details: validation.errors },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Get fields from GET endpoint to generate ID
+    const getEndpoint = await prisma.mockEndpoint.findFirst({
+      where: {
+        mockConfigId: mockConfig.id,
+        method: "GET",
+      },
+    });
+
+    const fields = (getEndpoint?.fields ?? []) as Field[];
+
+    // Create resource
+    const resource = await createResource(mockConfig.id, body, fields);
+
+    // Update access metrics
+    prisma.mockEndpoint
+      .update({
+        where: { id: endpoint.id },
+        data: {
+          accessCount: { increment: 1 },
+        },
+      })
+      .catch((err) => console.error("Error updating endpoint access count:", err));
+
+    return NextResponse.json(resource, { status: 201 });
+  } catch (error) {
+    console.error("Error creating resource:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

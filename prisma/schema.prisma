@@ -138,7 +138,8 @@ model MockConfig {
   createdBy      User         @relation(fields: [createdById], references: [id], onDelete: Cascade)
 
   // Endpoints par méthode HTTP
-  endpoints MockEndpoint[]
+  endpoints  MockEndpoint[]
+  storedData MockData[]
 
   // Métadonnées générales
   description String?
@@ -216,4 +217,23 @@ enum ResponseType {
   TEXT
   HTML
   BINARY
+}
+
+model MockData {
+  id           String     @id @default(uuid())
+  mockConfigId String
+  mockConfig   MockConfig @relation(fields: [mockConfigId], references: [id], onDelete: Cascade)
+
+  // Données
+  data       Json // Les données soumises
+  resourceId String // ID de la ressource (pour PUT/PATCH/DELETE)
+
+  // Métadonnées
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([mockConfigId, resourceId])
+  @@index([mockConfigId])
+  @@index([mockConfigId, resourceId])
+  @@map("mock_data")
 }
