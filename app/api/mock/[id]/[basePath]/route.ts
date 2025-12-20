@@ -1,12 +1,12 @@
 import { generateMockData, paginateData } from "@/lib/faker-generator";
 import {
-    createResource,
-    getResourceCount,
-    getResources,
+  createResource,
+  getResourceCount,
+  getResources,
 } from "@/lib/mock-data-manager";
-import { prisma } from "@/lib/prisma";
+import db from "@/lib/prisma";
 import { validateRequest } from "@/lib/request-validator";
-import { Field } from "@/lib/types/mock";
+import { Field } from "@/types/mock";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -22,7 +22,7 @@ export async function GET(
     const { id, basePath } = await params;
 
     // Find mock config
-    const mockConfig = await prisma.mockConfig.findFirst({
+    const mockConfig = await db.mockConfig.findFirst({
       where: {
         id,
         basePath,
@@ -89,7 +89,7 @@ export async function GET(
       data = result.data;
       
       // Update access metrics (fire and forget)
-      prisma.mockConfig
+      db.mockConfig
         .update({
           where: { id: mockConfig.id },
           data: {
@@ -99,7 +99,7 @@ export async function GET(
         })
         .catch((err) => console.error("Error updating access count:", err));
 
-      prisma.mockEndpoint
+      db.mockEndpoint
         .update({
           where: { id: endpoint.id },
           data: {
@@ -124,12 +124,12 @@ export async function GET(
     }
 
     // No stored data, generate with Faker
-    const fields = (endpoint.fields ?? []) as Field[];
+    const fields = (endpoint.fields as unknown as Field[]) ?? [];
     const count = endpoint.count || 10;
     data = generateMockData(fields, count);
 
     // Update access metrics (fire and forget)
-    prisma.mockConfig
+    db.mockConfig
       .update({
         where: { id: mockConfig.id },
         data: {
@@ -139,7 +139,7 @@ export async function GET(
       })
       .catch((err) => console.error("Error updating access count:", err));
 
-    prisma.mockEndpoint
+    db.mockEndpoint
       .update({
         where: { id: endpoint.id },
         data: {
@@ -175,7 +175,7 @@ export async function POST(
     const { id, basePath } = await params;
 
     // Find mock config
-    const mockConfig = await prisma.mockConfig.findFirst({
+    const mockConfig = await db.mockConfig.findFirst({
       where: {
         id,
         basePath,
@@ -223,20 +223,20 @@ export async function POST(
     }
 
     // Get fields from GET endpoint to generate ID
-    const getEndpoint = await prisma.mockEndpoint.findFirst({
+    const getEndpoint = await db.mockEndpoint.findFirst({
       where: {
         mockConfigId: mockConfig.id,
         method: "GET",
       },
     });
 
-    const fields = (getEndpoint?.fields ?? []) as Field[];
+    const fields = (getEndpoint?.fields as unknown as Field[]) ?? [];
 
     // Create resource
     const resource = await createResource(mockConfig.id, body, fields);
 
     // Update access metrics
-    prisma.mockEndpoint
+    db.mockEndpoint
       .update({
         where: { id: endpoint.id },
         data: {

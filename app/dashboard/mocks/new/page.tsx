@@ -21,6 +21,8 @@ import { Loader2, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS" | "HEAD";
+
 export default function NewMockPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -93,6 +95,8 @@ export default function NewMockPage() {
       basePath: name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
     });
   };
+
+
 
   // Submit form
   const handleSubmit = async (e: React.FormEvent) => {

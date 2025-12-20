@@ -1,10 +1,10 @@
 import {
-    deleteResource,
-    getResourceById,
-    replaceResource,
-    updateResource,
+  deleteResource,
+  getResourceById,
+  replaceResource,
+  updateResource,
 } from "@/lib/mock-data-manager";
-import { prisma } from "@/lib/prisma";
+import db from "@/lib/prisma";
 import { validateRequest } from "@/lib/request-validator";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -19,7 +19,7 @@ export async function GET(
     const { id, basePath, resourceId } = await params;
 
     // Find mock config
-    const mockConfig = await prisma.mockConfig.findFirst({
+    const mockConfig = await db.mockConfig.findFirst({
       where: {
         id,
         basePath,
@@ -65,7 +65,7 @@ export async function PUT(
     const { id, basePath, resourceId } = await params;
 
     // Find mock config
-    const mockConfig = await prisma.mockConfig.findFirst({
+    const mockConfig = await db.mockConfig.findFirst({
       where: {
         id,
         basePath,
@@ -108,7 +108,7 @@ export async function PUT(
     const resource = await replaceResource(mockConfig.id, resourceId, body);
 
     // Update access metrics
-    prisma.mockEndpoint
+    db.mockEndpoint
       .update({
         where: { id: endpoint.id },
         data: {
@@ -144,7 +144,7 @@ export async function PATCH(
     const { id, basePath, resourceId } = await params;
 
     // Find mock config
-    const mockConfig = await prisma.mockConfig.findFirst({
+    const mockConfig = await db.mockConfig.findFirst({
       where: {
         id,
         basePath,
@@ -188,7 +188,7 @@ export async function PATCH(
     const resource = await updateResource(mockConfig.id, resourceId, body);
 
     // Update access metrics
-    prisma.mockEndpoint
+    db.mockEndpoint
       .update({
         where: { id: endpoint.id },
         data: {
@@ -224,7 +224,7 @@ export async function DELETE(
     const { id, basePath, resourceId } = await params;
 
     // Find mock config
-    const mockConfig = await prisma.mockConfig.findFirst({
+    const mockConfig = await db.mockConfig.findFirst({
       where: {
         id,
         basePath,
@@ -260,7 +260,7 @@ export async function DELETE(
     }
 
     // Update access metrics
-    prisma.mockEndpoint
+    db.mockEndpoint
       .update({
         where: { id: endpoint.id },
         data: {

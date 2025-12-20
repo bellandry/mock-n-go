@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create mock config with GET endpoint
+    // Create mock config with all HTTP method endpoints
     const mockConfig = await db.mockConfig.create({
       data: {
         name,
@@ -73,15 +73,46 @@ export async function POST(req: NextRequest) {
         createdById: session.user.id,
         expiresAt: expiresAt ? new Date(expiresAt) : null,
         endpoints: {
-          create: {
-            method: "GET",
-            fields: fields as any,
-            count,
-            pagination,
-            randomErrors,
-            errorRate,
-            delay,
-          },
+          create: [
+            // GET endpoint - for listing/retrieving resources
+            {
+              method: "GET",
+              fields: fields as any,
+              count,
+              pagination,
+              randomErrors,
+              errorRate,
+              delay,
+            },
+            // POST endpoint - for creating resources
+            {
+              method: "POST",
+              randomErrors,
+              errorRate,
+              delay,
+            },
+            // PUT endpoint - for replacing resources
+            {
+              method: "PUT",
+              randomErrors,
+              errorRate,
+              delay,
+            },
+            // PATCH endpoint - for updating resources
+            {
+              method: "PATCH",
+              randomErrors,
+              errorRate,
+              delay,
+            },
+            // DELETE endpoint - for removing resources
+            {
+              method: "DELETE",
+              randomErrors,
+              errorRate,
+              delay,
+            },
+          ],
         },
       },
       include: {
