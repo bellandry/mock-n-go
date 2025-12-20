@@ -153,6 +153,7 @@ export async function getResourceById(
       },
     },
   });
+  console.log("resource", resource);
 
   return resource ? resource.data : null;
 }
