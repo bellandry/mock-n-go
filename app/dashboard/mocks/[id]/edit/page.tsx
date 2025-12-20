@@ -4,19 +4,19 @@ import { MockFormBasicInfo } from "@/components/mocks/mock-form/MockFormBasicInf
 import { MockFormFields } from "@/components/mocks/mock-form/MockFormFields";
 import { MockFormPreview } from "@/components/mocks/mock-form/MockFormPreview";
 import { MockFormResponseConfig } from "@/components/mocks/mock-form/MockFormResponseConfig";
-import { FreeTierBadge } from "@/components/ui/free-tier-badge";
 import { toastManager } from "@/components/ui/toast";
 import { useMockForm } from "@/hooks/useMockForm";
-import { useRouter } from "next/navigation";
+import { Field } from "@/types/mock";
+import { Loader2 } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export default function NewMockPage() {
+export default function EditMockPage() {
+  const params = useParams();
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeMockLimit, setActiveMockLimit] = useState<{
-    current: number;
-    limit: number;
-  } | null>(null);
+  const [initialData, setInitialData] = useState<any>(null);
 
   const {
     formData,
@@ -24,19 +24,61 @@ export default function NewMockPage() {
     fields,
     setFields,
     previewData,
-    selectedPreset,
-    handlePresetChange,
     updatePreview,
     validateForm,
-  } = useMockForm();
+  } = useMockForm({ initialData });
 
-  // Fetch active mock count
+  // Fetch existing mock data
   useEffect(() => {
-    fetch("/api/mock/limits")
-      .then((res) => res.json())
-      .then((data) => setActiveMockLimit(data))
-      .catch((err) => console.error("Error fetching limits:", err));
-  }, []);
+    if (params.id) {
+      fetchMock();
+    }
+  }, [params.id]);
+
+  const fetchMock = async () => {
+    try {
+      setIsLoading(true);
+      const res = await fetch(`/api/mock/${params.id}`);
+      if (res.ok) {
+        const data = await res.json();
+
+        // Get fields from GET endpoint
+        const getEndpoint = data.endpoints.find((e: any) => e.method === "GET");
+        const loadedFields = (getEndpoint?.fields as Field[]) || [];
+
+        const mockData = {
+          name: data.name,
+          basePath: data.basePath,
+          description: data.description || "",
+          isActive: data.isActive,
+          count: getEndpoint?.count || 10,
+          pagination: getEndpoint?.pagination || false,
+          randomErrors: getEndpoint?.randomErrors || false,
+          errorRate: getEndpoint?.errorRate || 0,
+          delay: getEndpoint?.delay || 0,
+          seedData: false,
+          seedCount: 5,
+          fields: loadedFields,
+        };
+
+        setInitialData(mockData);
+        setFormData(mockData);
+        setFields(loadedFields);
+        updatePreview(loadedFields);
+      } else if (res.status === 404) {
+        router.push("/dashboard/mocks");
+      }
+    } catch (error) {
+      console.error("Error fetching mock:", error);
+      toastManager.add({
+        type: "error",
+        title: "Error",
+        description: "Failed to load mock data",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,8 +96,8 @@ export default function NewMockPage() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("/api/mock", {
-        method: "POST",
+      const res = await fetch(`/api/mock/${params.id}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
@@ -64,45 +106,48 @@ export default function NewMockPage() {
       });
 
       if (res.ok) {
-        const data = await res.json();
         toastManager.add({
           type: "success",
           title: "Success",
-          description: "Mock API created successfully",
+          description: "Mock API updated successfully",
         });
-        router.push(`/dashboard/mocks/${data.id}`);
+        router.push(`/dashboard/mocks/${params.id}`);
       } else {
         const error = await res.json();
         toastManager.add({
           type: "error",
           title: "Error",
-          description: error.error || "Failed to create mock",
+          description: error.error || "Failed to update mock",
         });
       }
     } catch (error) {
-      console.error("Error creating mock:", error);
+      console.error("Error updating mock:", error);
       toastManager.add({
         type: "error",
         title: "Error",
-        description: "Failed to create mock",
+        description: "Failed to update mock",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Create Mock API</h1>
+        <h1 className="text-3xl font-bold">Edit Mock API</h1>
         <p className="text-muted-foreground mt-1">
-          Configure your mock API endpoint with custom fields
+          Update your mock API configuration
         </p>
       </div>
-
-      {activeMockLimit && (
-        <FreeTierBadge activeMocks={activeMockLimit} />
-      )}
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Configuration */}
@@ -110,8 +155,7 @@ export default function NewMockPage() {
           <MockFormBasicInfo
             formData={formData}
             onFormDataChange={setFormData}
-            onPresetChange={handlePresetChange}
-            selectedPreset={selectedPreset}
+            isEditMode
           />
 
           <MockFormResponseConfig
@@ -129,9 +173,9 @@ export default function NewMockPage() {
             onRefresh={() => updatePreview()}
             onSubmit={() => handleSubmit}
             onCancel={() => router.back()}
-            isSubmitting={isSubmitting || (activeMockLimit?.current ?? 0) >= (activeMockLimit?.limit ?? 5)}
+            isSubmitting={isSubmitting}
             fieldsCount={fields.length}
-            submitLabel="Create Mock API"
+            submitLabel="Update Mock API"
           />
         </div>
       </form>

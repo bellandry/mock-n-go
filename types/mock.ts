@@ -80,6 +80,69 @@ export type FieldType =
   | "foodCategory"
   | "calories"
   | "vegetarian"
+  // Auth | Security
+  | "jwt"
+  | "token"
+  | "role"
+  | "permission"
+  | "lastLogin"
+  | "expiresAt"
+  | "tokenType"
+  // E-COMMERCE / PAYMENTS
+  | "sku"
+  | "orderNumber"
+  | "orderStatus"
+  | "paymentStatus"
+  | "paymentProvider"
+  | "amount"
+  | "tax"
+  | "discount"
+  | "quantity"
+  | "cartTotal"
+  // ANALYTICS / METRICS
+  | "metricLabel"
+  | "count"
+  | "trend"
+  | "chartValue"
+  | "timeSeriesDate"
+  // STRUCTURE / DATA
+  | "array"
+  | "json"
+  | "object"
+  | "idReference"
+  // LOGS / API / ERRORS
+  | "httpMethod"
+  | "httpStatus"
+  | "errorCode"
+  | "errorMessage"
+  | "action"
+  | "entity"
+  // MOBILE / DEVICE
+  | "deviceType"
+  | "os"
+  | "osVersion"
+  | "appVersion"
+  | "browser"
+  // COMMUNICATION
+  | "shortMessage"
+  | "longMessage"
+  | "commentBody"
+  | "notificationType"
+  // GEO / LOCALE
+  | "latitude"
+  | "longitude"
+  | "timezone"
+  | "locale"
+  | "currencyCode"
+  // FEATURE FLAGS / CONFIG
+  | "featureKey"
+  | "environment"
+  | "configKey"
+  | "configValue"
+  // DATE (SÉMANTIQUE)
+  | "createdDate"
+  | "updatedDate"
+  | "deletedDate"
   // Other
   | "custom";
 
@@ -147,6 +210,7 @@ export interface MockConfig {
   accessCount: number;
   createdAt: string;
   updatedAt: string;
+  expiresAt?: string;
   lastAccessedAt?: string;
   mockUrl: string;
   endpoints: Array<{
