@@ -1,6 +1,6 @@
 import { generateMockData, paginateData } from "@/lib/faker-generator";
-import { prisma } from "@/lib/prisma";
-import { Field } from "@/lib/types/mock";
+import db from "@/lib/prisma";
+import { Field } from "@/types/mock";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -15,7 +15,7 @@ export async function GET(
     const { id, basePath } = await params;
 
     // Find mock config
-    const mockConfig = await prisma.mockConfig.findFirst({
+    const mockConfig = await db.mockConfig.findFirst({
       where: {
         id,
         basePath,
@@ -64,7 +64,7 @@ export async function GET(
 
     // Simulate delay if configured
     if (endpoint.delay && endpoint.delay > 0) {
-      await new Promise((resolve) => setTimeout(resolve, endpoint.delay));
+      await new Promise((resolve) => setTimeout(resolve, endpoint.delay ?? undefined));
     }
 
     // Get pagination params from query
@@ -73,12 +73,12 @@ export async function GET(
     const limit = parseInt(searchParams.get("limit") || "10", 10);
 
     // Generate mock data
-    const fields = endpoint.fields as Field[];
+    const fields = endpoint.fields ?? [] as Field[];
     const count = endpoint.count || 10;
-    const data = generateMockData(fields, count);
+    const data = generateMockData(fields as Field[], count);
 
     // Update access metrics (fire and forget)
-    prisma.mockConfig
+    db.mockConfig
       .update({
         where: { id: mockConfig.id },
         data: {
@@ -88,7 +88,7 @@ export async function GET(
       })
       .catch((err) => console.error("Error updating access count:", err));
 
-    prisma.mockEndpoint
+    db.mockEndpoint
       .update({
         where: { id: endpoint.id },
         data: {

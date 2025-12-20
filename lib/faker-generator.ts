@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Field, FieldType } from "./types/mock";
+import { Field, FieldType } from "../types/mock";
 
 /**
  * Generate a single value based on field type using Faker.js

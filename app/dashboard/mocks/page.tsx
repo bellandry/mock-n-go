@@ -1,26 +1,13 @@
 "use client";
 
+import { MockCard } from "@/components/mocks/mock-card";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useActiveOrganization } from "@/lib/auth-client";
+import { MockConfig } from "@/types/mock";
 import { Loader2, Plus } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
-interface MockConfig {
-  id: string;
-  name: string;
-  basePath: string;
-  description?: string;
-  isActive: boolean;
-  accessCount: number;
-  createdAt: string;
-  mockUrl: string;
-  endpoints: Array<{
-    method: string;
-    accessCount: number;
-  }>;
-}
 
 export default function MocksPage() {
   const { data: activeOrg } = useActiveOrganization();
@@ -48,9 +35,15 @@ export default function MocksPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this mock?")) return;
+  if (!activeOrg) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
+  const handleDelete = async (id: string) => {
     try {
       const res = await fetch(`/api/mock/${id}`, {
         method: "DELETE",
@@ -64,23 +57,10 @@ export default function MocksPage() {
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    // You could add a toast notification here
-  };
-
-  if (!activeOrg) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between">
         <div>
           <h1 className="text-3xl font-bold">Mock APIs</h1>
           <p className="text-muted-foreground mt-1">
@@ -89,8 +69,8 @@ export default function MocksPage() {
         </div>
         <Link href="/dashboard/mocks/new">
           <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Create Mock
+            <Plus className="w-4 h-4" />
+            New Mock
           </Button>
         </Link>
       </div>
@@ -118,71 +98,9 @@ export default function MocksPage() {
       ) : (
         <div className="grid gap-4">
           {mocks.map((mock) => (
-            <Card
-              key={mock.id}
-              className="p-6 bg-white/5 backdrop-blur-sm border-white/10"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-xl font-semibold">{mock.name}</h3>
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full ${
-                        mock.isActive
-                          ? "bg-green-500/20 text-green-400"
-                          : "bg-gray-500/20 text-gray-400"
-                      }`}
-                    >
-                      {mock.isActive ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-                  {mock.description && (
-                    <p className="text-muted-foreground mb-3">
-                      {mock.description}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span>
-                      Path: <code className="text-foreground">/{mock.basePath}</code>
-                    </span>
-                    <span>•</span>
-                    <span>
-                      Methods:{" "}
-                      {mock.endpoints.map((e) => e.method).join(", ")}
-                    </span>
-                    <span>•</span>
-                    <span>{mock.accessCount} calls</span>
-                  </div>
-                  <div className="mt-3 flex items-center gap-2">
-                    <code className="text-xs bg-black/30 px-3 py-1 rounded flex-1 overflow-x-auto">
-                      {mock.mockUrl}
-                    </code>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => copyToClipboard(mock.mockUrl)}
-                    >
-                      Copy
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 ml-4">
-                  <Link href={`/dashboard/mocks/${mock.id}`}>
-                    <Button variant="outline" size="sm">
-                      View
-                    </Button>
-                  </Link>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDelete(mock.id)}
-                    className="text-red-400 hover:text-red-300"
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            </Card>
+            <div key={mock.id}>
+              <MockCard mock={mock} onDelete={() => handleDelete(mock.id)} />
+            </div>
           ))}
         </div>
       )}

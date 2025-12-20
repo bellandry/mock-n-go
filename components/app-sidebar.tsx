@@ -1,18 +1,18 @@
 "use client";
 
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarGroup,
-    SidebarGroupContent,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useSession } from "@/lib/auth-client";
-import { Home, User } from "lucide-react";
+import { Home, MessageCircleCode } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { WorkplaceSwitcher } from "./workplace-switcher";
@@ -24,9 +24,9 @@ const navItems = [
     icon: Home,
   },
   {
-    title: "Profile",
-    href: "/dashboard/profile",
-    icon: User,
+    title: "Mocks",
+    href: "/dashboard/mocks",
+    icon: MessageCircleCode,
   },
 ];
 

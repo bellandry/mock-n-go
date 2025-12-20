@@ -32,9 +32,9 @@ export default async function DashboardLayout({
       <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
-          <div className="flex justify-center items-center gap-2">
+          <div className="flex justify-center items-center gap-3">
             <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="h-6" />
+            <Separator orientation="vertical" className="h-6 my-auto" />
             <ModeToggle />
           </div>
           {/* <UserNav /> */}

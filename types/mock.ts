@@ -137,3 +137,30 @@ export interface Preset {
   description?: string;
   fields: Field[];
 }
+
+export interface MockConfig {
+  id: string;
+  name: string;
+  basePath: string;
+  description?: string;
+  isActive: boolean;
+  accessCount: number;
+  createdAt: string;
+  updatedAt: string;
+  lastAccessedAt?: string;
+  mockUrl: string;
+  endpoints: Array<{
+    id: string;
+    method: string;
+    accessCount: number;
+    fields: any;
+    count: number;
+    pagination: boolean;
+    randomErrors: boolean;
+    errorRate: number;
+  }>;
+  createdBy: {
+    name: string;
+    email: string;
+  };
+}

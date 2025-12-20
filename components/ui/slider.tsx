@@ -26,7 +26,7 @@ function Slider({
 
   return (
     <SliderPrimitive.Root
-      className="data-[orientation=horizontal]:w-full"
+      className="data-[orientation=horizontal]:w-full my-4"
       defaultValue={defaultValue}
       max={max}
       min={min}

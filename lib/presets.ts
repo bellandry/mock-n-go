@@ -1,4 +1,4 @@
-import { Preset } from "./types/mock";
+import { Preset } from "../types/mock";
 
 export const PRESETS: Preset[] = [
   {

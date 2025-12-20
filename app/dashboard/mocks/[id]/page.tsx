@@ -1,37 +1,13 @@
 "use client";
 
+import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { toastManager } from "@/components/ui/toast";
+import { MockConfig } from "@/types/mock";
 import { Copy, ExternalLink, Loader2, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-interface MockConfig {
-  id: string;
-  name: string;
-  basePath: string;
-  description?: string;
-  isActive: boolean;
-  accessCount: number;
-  createdAt: string;
-  updatedAt: string;
-  lastAccessedAt?: string;
-  mockUrl: string;
-  endpoints: Array<{
-    id: string;
-    method: string;
-    accessCount: number;
-    fields: any;
-    count: number;
-    pagination: boolean;
-    randomErrors: boolean;
-    errorRate: number;
-  }>;
-  createdBy: {
-    name: string;
-    email: string;
-  };
-}
 
 export default function MockDetailPage() {
   const params = useParams();
@@ -39,6 +15,7 @@ export default function MockDetailPage() {
   const [mock, setMock] = useState<MockConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -64,8 +41,6 @@ export default function MockDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this mock?")) return;
-
     try {
       setIsDeleting(true);
       const res = await fetch(`/api/mock/${params.id}`, {
@@ -84,6 +59,11 @@ export default function MockDetailPage() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
+    toastManager.add({
+      type: "success",
+      "title": "Copied",
+      description: "Link copied to your clipboard"
+    })
   };
 
   if (isLoading) {
@@ -101,6 +81,7 @@ export default function MockDetailPage() {
   const getEndpoint = mock.endpoints.find((e) => e.method === "GET");
 
   return (
+    <>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
@@ -111,7 +92,7 @@ export default function MockDetailPage() {
               className={`px-2 py-1 text-xs rounded-full ${
                 mock.isActive
                   ? "bg-green-500/20 text-green-400"
-                  : "bg-gray-500/20 text-gray-400"
+                  : "bg-yellow-500/20 text-yellow-700"
               }`}
             >
               {mock.isActive ? "Active" : "Inactive"}
@@ -124,15 +105,15 @@ export default function MockDetailPage() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={handleDelete}
+            onClick={() => setShowDeleteDialog(true)}
             disabled={isDeleting}
-            className="text-red-400 hover:text-red-300"
+            className="text-red-600 hover:text-red-500"
           >
             {isDeleting ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <>
-                <Trash2 className="w-4 h-4 mr-2" />
+                <Trash2 className="w-4 h-4" />
                 Delete
               </>
             )}
@@ -143,10 +124,11 @@ export default function MockDetailPage() {
       {/* API URL */}
       <Card className="p-6 bg-white/5 backdrop-blur-sm border-white/10">
         <h2 className="text-lg font-semibold mb-3">API Endpoint</h2>
-        <div className="flex items-center gap-2">
-          <code className="text-sm bg-black/30 px-4 py-2 rounded flex-1 overflow-x-auto">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
+          <code className="text-sm bg-muted px-4 py-2 rounded flex-1 overflow-x-auto">
             {mock.mockUrl}
           </code>
+          <div className="flex gap-3">
           <Button
             size="sm"
             variant="outline"
@@ -161,6 +143,7 @@ export default function MockDetailPage() {
               Test
             </Button>
           </a>
+          </div>
         </div>
         {getEndpoint?.pagination && (
           <p className="text-xs text-muted-foreground mt-2">
@@ -261,5 +244,14 @@ export default function MockDetailPage() {
         </div>
       </Card>
     </div>
+    <DeleteConfirmationDialog
+      open={showDeleteDialog}
+      onOpenChange={setShowDeleteDialog}
+      onConfirm={handleDelete}
+      title="Delete Mock API"
+      description="This action cannot be undone."
+      itemName={mock.name}
+    />
+  </>
   );
 }

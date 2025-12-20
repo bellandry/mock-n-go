@@ -16,7 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { FIELD_TYPES, generateMockData } from "@/lib/faker-generator";
 import { PRESETS } from "@/lib/presets";
-import { Field, FieldType } from "@/lib/types/mock";
+import { Field, FieldType } from "@/types/mock";
 import { Loader2, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -81,7 +81,7 @@ export default function NewMockPage() {
       setPreviewData([]);
       return;
     }
-    const data = generateMockData(fieldsToPreview, 3);
+    const data = generateMockData(fieldsToPreview, 2);
     setPreviewData(data);
   };
 
@@ -250,7 +250,7 @@ export default function NewMockPage() {
               </div>
 
               {formData.randomErrors && (
-                <div className="space-y-4">
+                <div>
                   <Label htmlFor="errorRate">
                     Error Rate: {formData.errorRate}%
                   </Label>

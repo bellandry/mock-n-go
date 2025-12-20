@@ -3,9 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-    authClient,
-    useActiveOrganization,
-    useSession
+  authClient,
+  useActiveOrganization,
+  useSession
 } from "@/lib/auth-client";
 import { Activity, Loader2, Plus, Users, Zap } from "lucide-react";
 import Link from "next/link";
@@ -131,7 +131,7 @@ export default function DashboardPage() {
         <div className="flex gap-3">
           <Link href="/dashboard/mocks/new">
             <Button>
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-4 h-4" />
               Create Mock API
             </Button>
           </Link>
