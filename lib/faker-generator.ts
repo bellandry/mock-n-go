@@ -172,6 +172,180 @@ export function generateFieldValue(field: Field, index?: number): any {
       return faker.number.int({ min: 100, max: 1500 });
     case "vegetarian":
       return faker.datatype.boolean();
+    
+      case "jwt":
+      return faker.internet.jwt();
+
+    case "token":
+      return faker.string.alphanumeric(32);
+
+    case "role":
+      return faker.helpers.arrayElement(["user", "admin", "manager", "editor"]);
+
+    case "permission":
+      return faker.helpers.arrayElement(["read", "write", "update", "delete"]);
+
+    case "lastLogin":
+      return faker.date.recent().toISOString();
+
+    case "expiresAt":
+      return faker.date.future().toISOString();
+
+    case "tokenType":
+      return "Bearer";
+
+    // E-COMMERCE / PAYMENTS
+    case "sku":
+      return faker.commerce.isbn();
+
+    case "orderNumber":
+      return faker.string.numeric(8);
+
+    case "orderStatus":
+      return faker.helpers.arrayElement([
+        "pending",
+        "paid",
+        "shipped",
+        "delivered",
+        "cancelled",
+      ]);
+
+    case "paymentStatus":
+      return faker.helpers.arrayElement([
+        "pending",
+        "succeeded",
+        "failed",
+        "refunded",
+      ]);
+
+    case "paymentProvider":
+      return faker.helpers.arrayElement([
+        "Stripe",
+        "PayPal",
+        "Flutterwave",
+        "Paystack",
+      ]);
+
+    case "amount":
+    case "tax":
+    case "cartTotal":
+      return parseFloat(faker.commerce.price());
+
+    case "discount":
+      return faker.number.int({ min: 0, max: 50 });
+
+    case "quantity":
+      return faker.number.int({ min: 1, max: 10 });
+
+    // ANALYTICS / METRICS
+    case "metricLabel":
+      return faker.word.words(2);
+
+    case "count":
+      return faker.number.int({ min: 0, max: 100000 });
+
+    case "trend":
+      return faker.helpers.arrayElement(["up", "down", "stable"]);
+
+    case "chartValue":
+      return faker.number.float({ min: 0, max: 1000, fractionDigits: 2 });
+
+    case "timeSeriesDate":
+      return faker.date.recent().toISOString().split("T")[0];
+
+    // STRUCTURE / DATA
+    case "array":
+      return faker.helpers.arrayElements(
+        [faker.word.words(), faker.word.words(), faker.word.words()],
+        { min: 1, max: 3 }
+      );
+
+    case "json":
+    case "object":
+      return {
+        key: faker.word.words(2),
+        value: faker.word.words(2),
+      };
+
+    case "idReference":
+      return faker.string.uuid();
+
+    // LOGS / API / ERRORS
+    case "httpMethod":
+      return faker.helpers.arrayElement(["GET", "POST", "PUT", "PATCH", "DELETE"]);
+
+    case "httpStatus":
+      return faker.helpers.arrayElement([200, 201, 400, 401, 403, 404, 500]);
+
+    case "errorCode":
+      return faker.string.alpha({ length: 6, casing: "upper" });
+
+    case "errorMessage":
+      return faker.lorem.sentence();
+
+    case "action":
+      return faker.word.verb();
+
+    case "entity":
+      return faker.word.noun();
+
+    // MOBILE / DEVICE
+    case "deviceType":
+      return faker.helpers.arrayElement(["mobile", "tablet", "desktop"]);
+
+    case "os":
+      return faker.helpers.arrayElement(["iOS", "Android", "Windows", "macOS", "Linux"]);
+
+    case "osVersion":
+      return faker.system.semver();
+
+    case "appVersion":
+      return faker.system.semver();
+
+    case "browser":
+      return faker.helpers.arrayElement(["Chrome", "Firefox", "Safari", "Edge"]);
+
+    // COMMUNICATION
+    case "shortMessage":
+      return faker.lorem.sentence();
+
+    case "longMessage":
+      return faker.lorem.paragraphs(2);
+
+    case "commentBody":
+      return faker.lorem.sentences(2);
+
+    case "notificationType":
+      return faker.helpers.arrayElement(["info", "success", "warning", "error"]);
+
+    // GEO / LOCALE
+    case "latitude":
+      return faker.location.latitude();
+
+    case "longitude":
+      return faker.location.longitude();
+
+    case "timezone":
+      return faker.location.timeZone();
+
+    case "locale":
+      return faker.location.countryCode();
+
+    case "currencyCode":
+      return faker.finance.currencyCode();
+
+    // FEATURE FLAGS / CONFIG
+    case "featureKey":
+      return faker.word.words(2).replace(/\s+/g, "_");
+
+    case "environment":
+      return faker.helpers.arrayElement(["development", "staging", "production"]);
+
+    case "configKey":
+      return faker.word.words(2).replace(/\s+/g, "_");
+
+    case "configValue":
+      return faker.word.words(2);
 
     // Custom
     case "custom":

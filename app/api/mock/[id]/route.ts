@@ -163,6 +163,7 @@ export async function PATCH(
 
 /**
  * DELETE /api/mock/[id] - Delete a mock configuration
+ * Note: Free tier users cannot manually delete mocks (auto-expiration only)
  */
 export async function DELETE(
   req: NextRequest,
@@ -192,12 +193,21 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Delete mock (endpoints will be cascade deleted)
-    await db.mockConfig.delete({
-      where: { id },
-    });
+    // Block manual deletion for free tier users
+    // TODO: Check user subscription plan when implemented
+    return NextResponse.json(
+      {
+        error: "Free tier mocks cannot be manually deleted. They will automatically expire after 24 hours.",
+        expiresAt: mockConfig.expiresAt,
+      },
+      { status: 403 }
+    );
 
-    return NextResponse.json({ success: true });
+    // This code will be enabled for paid users in the future
+    // await db.mockConfig.delete({
+    //   where: { id },
+    // });
+    // return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting mock:", error);
     return NextResponse.json(

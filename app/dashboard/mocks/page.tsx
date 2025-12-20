@@ -3,6 +3,7 @@
 import { MockCard } from "@/components/mocks/mock-card";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { toastManager } from "@/components/ui/toast";
 import { useActiveOrganization } from "@/lib/auth-client";
 import { MockConfig } from "@/types/mock";
 import { Loader2, Plus } from "lucide-react";
@@ -51,9 +52,27 @@ export default function MocksPage() {
 
       if (res.ok) {
         setMocks(mocks.filter((m) => m.id !== id));
+        toastManager.add({
+          type: "success",
+          title: "Success",
+          description: "Mock deleted successfully",
+        });
+      } else {
+        // Parse error response
+        const errorData = await res.json();
+        toastManager.add({
+          type: "error",
+          title: "Cannot Delete",
+          description: errorData.error || "Failed to delete mock",
+        });
       }
     } catch (error) {
       console.error("Error deleting mock:", error);
+      toastManager.add({
+        type: "error",
+        title: "Error",
+        description: "An unexpected error occurred",
+      });
     }
   };
 

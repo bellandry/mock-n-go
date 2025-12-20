@@ -46,6 +46,14 @@ export function MockFormBasicInfo({
     <Card className="p-6 bg-white/5 backdrop-blur-sm border-white/10">
       <h2 className="text-xl font-semibold">Basic Information</h2>
 
+      {!isEditMode && (
+        <div className="p-3 dark:bg-indigo-500/10 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
+          <p className="text-sm dark:text-indigo-200 text-indigo-500">
+            <strong>Free Tier:</strong> Mocks automatically expire after 24 hours. You can have up to 5 active mocks simultaneously.
+          </p>
+        </div>
+      )}
+
       <div className="space-y-4">
         {!isEditMode && onPresetChange && selectedPreset && (
           <div>

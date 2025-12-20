@@ -152,6 +152,10 @@ model MockConfig {
   expiresAt      DateTime?
   lastAccessedAt DateTime?
 
+  // Rate limiting (free tier: 100 requests/day for entire mock)
+  dailyRequestCount Int       @default(0)
+  lastRequestDate   DateTime?
+
   @@unique([organizationId, basePath])
   @@index([organizationId])
   @@index([createdById])

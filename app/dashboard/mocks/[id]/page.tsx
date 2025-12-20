@@ -55,12 +55,31 @@ export default function MockDetailPage() {
       });
 
       if (res.ok) {
+        toastManager.add({
+          type: "success",
+          title: "Success",
+          description: "Mock deleted successfully",
+        });
         router.push("/dashboard/mocks");
+      } else {
+        // Parse error response
+        const errorData = await res.json();
+        toastManager.add({
+          type: "error",
+          title: "Cannot Delete",
+          description: errorData.error || "Failed to delete mock",
+        });
       }
     } catch (error) {
       console.error("Error deleting mock:", error);
+      toastManager.add({
+        type: "error",
+        title: "Error",
+        description: "An unexpected error occurred",
+      });
     } finally {
       setIsDeleting(false);
+      setShowDeleteDialog(false);
     }
   };
 

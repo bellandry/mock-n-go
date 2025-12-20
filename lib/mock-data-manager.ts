@@ -39,15 +39,21 @@ export async function createResource(
     );
   }
 
-  // Generate resource ID
-  const resourceId = generateResourceId(fields);
-
-  // Add ID to data if not present
+  // Find ID field in schema
   const idField = fields.find(
     (f) => f.name === "id" || f.name === "_id" || f.name === "ID"
   );
-  if (idField && !data[idField.name]) {
-    data[idField.name] = resourceId;
+
+  // Use ID from data if available, otherwise generate one
+  let resourceId: string;
+  if (idField && data[idField.name]) {
+    resourceId = data[idField.name];
+  } else {
+    resourceId = generateResourceId(fields);
+    // Add generated ID to data if ID field exists
+    if (idField) {
+      data[idField.name] = resourceId;
+    }
   }
 
   // Add timestamps
@@ -153,6 +159,7 @@ export async function getResourceById(
       },
     },
   });
+  console.log("resource", resource);
 
   return resource ? resource.data : null;
 }

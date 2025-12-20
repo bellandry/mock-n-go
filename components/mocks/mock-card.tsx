@@ -1,7 +1,7 @@
 import { MockConfig } from "@/types/mock";
-import { Eye, Trash2 } from "lucide-react";
+import { Clock, Eye, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DeleteConfirmationDialog } from "../delete-confirmation-dialog";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
@@ -14,6 +14,49 @@ export type MockCardProps = {
 
 export const MockCard = ({mock, onDelete}: MockCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState<string>("");
+
+  useEffect(() => {
+    if (!mock.expiresAt) return;
+
+    const updateTimeRemaining = () => {
+      const now = new Date();
+      const expiresAt = new Date(mock.expiresAt!);
+      const diff = expiresAt.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setTimeRemaining("Expired");
+        return;
+      }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+      if (hours > 0) {
+        setTimeRemaining(`${hours}h ${minutes}m`);
+      } else {
+        setTimeRemaining(`${minutes}m`);
+      }
+    };
+
+    updateTimeRemaining();
+    const interval = setInterval(updateTimeRemaining, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, [mock.expiresAt]);
+
+  const getExpirationColor = () => {
+    if (!mock.expiresAt) return "text-muted-foreground";
+    const now = new Date();
+    const expiresAt = new Date(mock.expiresAt);
+    const diff = expiresAt.getTime() - now.getTime();
+    const hours = diff / (1000 * 60 * 60);
+
+    if (hours <= 0) return "text-red-400";
+    if (hours < 1) return "text-red-400";
+    if (hours < 6) return "text-yellow-400";
+    return "text-green-400";
+  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -34,10 +77,10 @@ export const MockCard = ({mock, onDelete}: MockCardProps) => {
         description="This action cannot be undone."
         itemName={mock.name}
       />
-      <Card
-        key={mock.id}
-        className="p-4 md:p-6 bg-white/5 backdrop-blur-sm border-white/10"
-      >
+    <Card
+      key={mock.id}
+      className="p-4 md:p-6 bg-white/5 backdrop-blur-sm border-white/10"
+    >
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2 justify-between">
@@ -77,7 +120,7 @@ export const MockCard = ({mock, onDelete}: MockCardProps) => {
                 {mock.description}
               </p>
             )}
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
               <span>
                 Path: <code className="text-foreground">/{mock.basePath}</code>
               </span>
@@ -88,6 +131,15 @@ export const MockCard = ({mock, onDelete}: MockCardProps) => {
               </span>
               <span>•</span>
               <span>{mock.accessCount} calls</span>
+              {mock.expiresAt && (
+                <>
+                  <span>•</span>
+                  <span className={`flex items-center gap-1 ${getExpirationColor()}`}>
+                    <Clock className="size-3" />
+                    Expires in {timeRemaining}
+                  </span>
+                </>
+              )}
             </div>
             <div className="mt-3 flex items-center gap-2">
               <code className="text-xs bg-muted px-3 py-2 rounded flex-1 overflow-x-auto">
