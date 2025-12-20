@@ -14,6 +14,8 @@ interface UseMockFormProps {
     randomErrors: boolean;
     errorRate: number;
     delay?: number;
+    seedData?: boolean;
+    seedCount?: number;
     fields: Field[];
   };
 }
@@ -30,6 +32,8 @@ export function useMockForm({ initialData }: UseMockFormProps = {}) {
     randomErrors: initialData?.randomErrors || false,
     errorRate: initialData?.errorRate || 0,
     delay: initialData?.delay || 0,
+    seedData: initialData?.seedData || false,
+    seedCount: initialData?.seedCount || 5,
   });
 
   const [fields, setFields] = useState<Field[]>(initialData?.fields || []);

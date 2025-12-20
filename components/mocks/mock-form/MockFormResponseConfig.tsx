@@ -11,13 +11,17 @@ interface MockFormResponseConfigProps {
     randomErrors: boolean;
     errorRate: number;
     delay?: number;
+    seedData?: boolean;
+    seedCount?: number;
   };
   onFormDataChange: (data: any) => void;
+  isEditMode?: boolean;
 }
 
 export function MockFormResponseConfig({
   formData,
   onFormDataChange,
+  isEditMode = false,
 }: MockFormResponseConfigProps) {
   return (
     <Card className="p-6 bg-white/5 backdrop-blur-sm border-white/10">
@@ -98,6 +102,48 @@ export function MockFormResponseConfig({
               }
             />
           </div>
+        )}
+
+        {!isEditMode && formData.seedData !== undefined && (
+          <>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="seedData">Seed Random Data</Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Automatically populate with random data on creation
+                </p>
+              </div>
+              <Switch
+                id="seedData"
+                checked={formData.seedData}
+                onCheckedChange={(checked) =>
+                  onFormDataChange({ ...formData, seedData: checked })
+                }
+              />
+            </div>
+
+            {formData.seedData && formData.seedCount !== undefined && (
+              <div>
+                <Label htmlFor="seedCount">
+                  Number of Entries (max 10)
+                </Label>
+                <Input
+                  id="seedCount"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={formData.seedCount}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 1;
+                    onFormDataChange({
+                      ...formData,
+                      seedCount: Math.min(Math.max(value, 1), 10),
+                    });
+                  }}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
     </Card>

@@ -66,6 +66,27 @@ export async function createResource(
 }
 
 /**
+ * Seed multiple random resources at once
+ */
+export async function seedRandomData(
+  mockConfigId: string,
+  fields: Field[],
+  count: number
+): Promise<any[]> {
+  const { generateMockData } = await import("./faker-generator");
+  const mockData = generateMockData(fields, count);
+  
+  const createdResources = [];
+  
+  for (const data of mockData) {
+    const resource = await createResource(mockConfigId, data, fields);
+    createdResources.push(resource);
+  }
+  
+  return createdResources;
+}
+
+/**
  * Get all resources for a mock
  */
 export async function getResources(

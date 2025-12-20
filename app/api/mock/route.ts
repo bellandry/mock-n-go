@@ -36,6 +36,8 @@ export async function POST(req: NextRequest) {
       errorRate = 0,
       delay,
       expiresAt,
+      seedData = false,
+      seedCount = 5,
     } = body;
 
     // Validation
@@ -119,6 +121,12 @@ export async function POST(req: NextRequest) {
         endpoints: true,
       },
     });
+
+    // Seed random data if requested
+    if (seedData && seedCount > 0) {
+      const { seedRandomData } = await import("@/lib/mock-data-manager");
+      await seedRandomData(mockConfig.id, fields, Math.min(seedCount, 10));
+    }
 
     // Generate the mock URL
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;

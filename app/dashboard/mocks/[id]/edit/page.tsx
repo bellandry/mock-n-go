@@ -56,6 +56,8 @@ export default function EditMockPage() {
           randomErrors: getEndpoint?.randomErrors || false,
           errorRate: getEndpoint?.errorRate || 0,
           delay: getEndpoint?.delay || 0,
+          seedData: false,
+          seedCount: 5,
           fields: loadedFields,
         };
 
