@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { AlertCircle, Home, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -52,7 +53,7 @@ function ErrorContent() {
   const error = errorMessages[errorCode] || errorMessages.default;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-linear-to-br from-orange-50 via-white to-red-100">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-linear-to-br from-orange-700/5 via-transparent to-primary/10">
       <Card className="w-full max-w-md p-8 space-y-4 shadow-xl">
         {/* Error Icon */}
         <div className="flex justify-center">
@@ -63,8 +64,8 @@ function ErrorContent() {
 
         {/* Error Content */}
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-gray-900">{error.title}</h1>
-          <p className="text-gray-600 text-sm">{error.description}</p>
+          <h1 className="text-2xl font-bold">{error.title}</h1>
+          <p className="text-gray-500 text-sm">{error.description}</p>
         </div>
 
         {/* Error Code */}
@@ -77,28 +78,25 @@ function ErrorContent() {
         )}
 
         {/* Actions */}
-        <div className="space-y-3">
-          <Button
-          
-            className="w-full bg-red-600 hover:bg-red-700"
-          >
-            <Link href="/sign-in" className="flex items-center">
+        <div className="flex flex-col gap-3">
+          <Link href="/sign-in">
+            <Button  className="w-full">
               <RefreshCw className="w-4 h-4 mr-2" />
               Try Again
-            </Link>
-          </Button>
+            </Button>
+          </Link>
 
-          <Button variant="outline" className="w-full">
-            <Link href="/" className="flex items-center">
+          <Link href="/">
+            <Button variant="outline" className="w-full">
               <Home className="w-4 h-4 mr-2" />
               Go to Homepage
-            </Link>
-          </Button>
+            </Button>
+          </Link>
         </div>
-
         {/* Help Text */}
-        <div className="pt-4 border-t border-gray-200">
-          <p className="text-xs text-center text-gray-500">
+        <div className="pt-4">
+          <Separator />
+          <p className="text-xs text-center text-gray-500 mt-3">
             If this problem persists, please contact support at{" "}
             <a
               href="mailto:support@mockngo.laclass.dev"
