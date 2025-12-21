@@ -1,12 +1,13 @@
 import { generateMockData, paginateData } from "@/lib/faker-generator";
 import { checkRateLimit, incrementRequestCount } from "@/lib/free-tier-limits";
 import {
-    createResource,
-    getResourceCount,
-    getResources,
+  createResource,
+  getResourceCount,
+  getResources,
 } from "@/lib/mock-data-manager";
 import db from "@/lib/prisma";
 import { validateRequest } from "@/lib/request-validator";
+import { updateEndpointCount, updateHeaders } from "@/lib/subscription-helpers";
 import { Field } from "@/types/mock";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -46,24 +47,23 @@ export async function GET(
       );
     }
 
+    // Check rate limit (100 requests/day for free tier - applies to entire mock)
+    const rateLimit = await checkRateLimit(mockConfig.id);
+
+    // Add headers
+    const headers = updateHeaders(rateLimit)
+
     const endpoint = mockConfig.endpoints[0];
 
     // Check if mock has expired
     if (mockConfig.expiresAt && new Date() > mockConfig.expiresAt) {
       return NextResponse.json(
         { error: "Mock endpoint has expired" },
-        { status: 410 }
+        { status: 410, headers }
       );
     }
 
-    // Check rate limit (100 requests/day for free tier - applies to entire mock)
-    const rateLimit = await checkRateLimit(mockConfig.id);
     if (!rateLimit.allowed) {
-      const headers = new Headers();
-      headers.set("X-RateLimit-Limit", rateLimit.limit.toString());
-      headers.set("X-RateLimit-Remaining", "0");
-      headers.set("X-RateLimit-Reset", rateLimit.resetsAt?.toISOString() || "");
-      headers.set("X-Powered-By", "Mock-n-Go Free Tier");
 
       return NextResponse.json(
         {
@@ -99,7 +99,7 @@ export async function GET(
 
     // Check if we have stored data
     const storedCount = await getResourceCount(mockConfig.id);
-    let data: any[];
+    let data: any[] = [];
 
     if (storedCount > 0) {
       // Use stored data
@@ -121,22 +121,10 @@ export async function GET(
       incrementRequestCount(mockConfig.id).catch((err: any) =>
         console.error("Error updating rate limit:", err)
       );
-
-      // Add headers
-      const headers = new Headers();
       
       // Only add watermark for Free tier
       const { checkFeatureAccess } = await import("@/lib/subscription-helpers");
       const hasWatermark = await checkFeatureAccess(mockConfig.organizationId, "watermark");
-      if (hasWatermark) {
-        headers.set("X-Powered-By", "Mock-n-Go Free Tier");
-      }
-      
-      headers.set("X-RateLimit-Limit", rateLimit.limit.toString());
-      headers.set(
-        "X-RateLimit-Remaining",
-        Math.max(0, rateLimit.limit - rateLimit.current - 1).toString()
-      );
 
       if (endpoint.pagination) {
         return NextResponse.json(
@@ -161,30 +149,8 @@ export async function GET(
     const count = endpoint.count || 10;
     data = generateMockData(fields, count);
 
-    // Update access metrics (fire and forget)
-    db.mockConfig
-      .update({
-        where: { id: mockConfig.id },
-        data: {
-          accessCount: { increment: 1 },
-          lastAccessedAt: new Date(),
-        },
-      })
-      .catch((err) => console.error("Error updating access count:", err));
-
-    // Increment rate limit counter
-    incrementRequestCount(mockConfig.id).catch((err: any) =>
-      console.error("Error updating rate limit:", err)
-    );
-
-    // Add watermark header
-    const headers = new Headers();
-    headers.set("X-Powered-By", "Mock-n-Go Free Tier");
-    headers.set("X-RateLimit-Limit", rateLimit.limit.toString());
-    headers.set(
-      "X-RateLimit-Remaining",
-      Math.max(0, rateLimit.limit - rateLimit.current - 1).toString()
-    );
+    // Update access metrics
+    updateEndpointCount(mockConfig.id, endpoint)
 
     // Return paginated or full data
     if (endpoint.pagination) {
@@ -235,6 +201,10 @@ export async function POST(
         { status: 404 }
       );
     }
+    
+    // Check rate limit (100 requests/day for free tier - applies to entire mock)
+    const rateLimit = await checkRateLimit(mockConfig.id);
+    const headers = updateHeaders(rateLimit);
 
     const endpoint = mockConfig.endpoints[0];
 
@@ -242,19 +212,11 @@ export async function POST(
     if (mockConfig.expiresAt && new Date() > mockConfig.expiresAt) {
       return NextResponse.json(
         { error: "Mock endpoint has expired" },
-        { status: 410 }
+        { status: 410, headers }
       );
     }
 
-    // Check rate limit (100 requests/day for free tier - applies to entire mock)
-    const rateLimit = await checkRateLimit(mockConfig.id);
     if (!rateLimit.allowed) {
-      const headers = new Headers();
-      headers.set("X-RateLimit-Limit", rateLimit.limit.toString());
-      headers.set("X-RateLimit-Remaining", "0");
-      headers.set("X-RateLimit-Reset", rateLimit.resetsAt?.toISOString() || "");
-      headers.set("X-Powered-By", "Mock-n-Go Free Tier");
-
       return NextResponse.json(
         {
           error: `Rate limit exceeded. Free tier allows ${rateLimit.limit} requests per day per mock (all methods combined). Resets at ${rateLimit.resetsAt?.toISOString()}`,
@@ -292,28 +254,7 @@ export async function POST(
       const resource = await createResource(mockConfig.id, body, fields);
 
       // Update access metrics
-      db.mockEndpoint
-        .update({
-          where: { id: endpoint.id },
-          data: {
-            accessCount: { increment: 1 },
-          },
-        })
-        .catch((err) => console.error("Error updating endpoint access count:", err));
-
-      // Increment rate limit counter
-      incrementRequestCount(mockConfig.id).catch((err: any) =>
-        console.error("Error updating rate limit:", err)
-      );
-
-      // Add watermark header
-      const headers = new Headers();
-      headers.set("X-Powered-By", "Mock-n-Go Free Tier");
-      headers.set("X-RateLimit-Limit", rateLimit.limit.toString());
-      headers.set(
-        "X-RateLimit-Remaining",
-        Math.max(0, rateLimit.limit - rateLimit.current - 1).toString()
-      );
+      updateEndpointCount(mockConfig.id, endpoint)
 
       return NextResponse.json(resource, { status: 201, headers });
     } catch (createError: any) {

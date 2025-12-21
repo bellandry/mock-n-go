@@ -1,4 +1,5 @@
-import { SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
+import { MockEndpoint, SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
+import { incrementRequestCount } from "./free-tier-limits";
 import db from "./prisma";
 import { SUBSCRIPTION_LIMITS } from "./subscription-limits";
 
@@ -42,6 +43,57 @@ export function getEffectivePlan(subscription: {
   }
 
   return subscription.plan;
+}
+
+/**
+ * Create custom Headers
+ */
+export function updateHeaders(rateLimit: {
+    allowed: boolean;
+    current: number;
+    limit: number;
+    resetsAt?: Date | undefined;
+}) {
+  const headers = new Headers();
+  headers.set("X-Powered-By", "Mock-n-Go Free Tier");
+  headers.set("X-RateLimit-Limit", rateLimit.limit.toString());
+  headers.set("X-RateLimit-Reset", rateLimit.resetsAt?.toISOString() || "");
+  headers.set(
+    "X-RateLimit-Remaining",
+    Math.max(0, rateLimit.limit - rateLimit.current - 1).toString()
+  );
+  return headers
+}
+
+export function updateEndpointCount(mockConfigId: string, endpoint?: MockEndpoint) {
+  // Update access metrics (fire and forget)
+    db.mockConfig
+      .update({
+        where: { id: mockConfigId },
+        data: {
+          accessCount: { increment: 1 },
+          lastAccessedAt: new Date(),
+        },
+      })
+      .then(() => {
+        // update endpoint metrics
+        if(endpoint) {
+          db.mockEndpoint
+          .update({
+            where: { id: endpoint.id },
+            data: {
+              accessCount: { increment: 1 },
+            },
+          })
+          .catch((err) => console.error("Error updating endpoint access count:", err));
+        }
+      })
+      .catch((err) => console.error("Error updating access count:", err));
+
+    // Increment rate limit counter
+    incrementRequestCount(mockConfigId).catch((err: any) =>
+      console.error("Error updating rate limit:", err)
+    );
 }
 
 /**
