@@ -87,6 +87,7 @@ model Organization {
   invitations Invitation[]
   sessions    Session[]
   mocks       MockConfig[]
+  subscription Subscription?
 
   @@map("organization")
 }
@@ -240,4 +241,49 @@ model MockData {
   @@index([mockConfigId])
   @@index([mockConfigId, resourceId])
   @@map("mock_data")
+}
+
+model Subscription {
+  id String @id @default(uuid())
+
+  // Relation
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Plan details
+  plan   SubscriptionPlan   @default(FREE)
+  status SubscriptionStatus @default(ACTIVE)
+
+  // Billing period
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+
+  // Trial
+  trialEndsAt DateTime?
+  isTrialing  Boolean  @default(false)
+
+  // Stripe integration (for future)
+  stripeCustomerId     String? @unique
+  stripeSubscriptionId String? @unique
+  stripePriceId        String?
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("subscription")
+}
+
+enum SubscriptionPlan {
+  FREE
+  PRO
+  TEAM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  TRIALING
 }

@@ -1,6 +1,8 @@
 import { auth } from "@/lib/auth";
-import { checkActiveMockLimit, getFreeTierExpiration } from "@/lib/free-tier-limits";
+import { checkActiveMockLimit } from "@/lib/free-tier-limits";
 import db from "@/lib/prisma";
+import { getEffectivePlan, getOrganizationSubscription } from "@/lib/subscription-helpers";
+import { getMockExpiration } from "@/lib/subscription-limits";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -47,7 +49,6 @@ export async function POST(req: NextRequest) {
       randomErrors = false,
       errorRate = 0,
       delay,
-      expiresAt,
       seedData = false,
       seedCount = 5,
     } = body;
@@ -77,6 +78,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Get subscription to determine expiration
+    const subscription = await getOrganizationSubscription(activeOrganizationId);
+    const effectivePlan = getEffectivePlan(subscription);
+    const expiresAt = getMockExpiration(effectivePlan);
+
     // Create mock config with all HTTP method endpoints
     const mockConfig = await db.mockConfig.create({
       data: {
@@ -85,7 +91,7 @@ export async function POST(req: NextRequest) {
         description,
         organizationId: activeOrganizationId,
         createdById: session.user.id,
-        expiresAt: getFreeTierExpiration(), // Auto-expire after 24 hours for free tier
+        expiresAt: expiresAt, // Subscription-based expiration
         endpoints: {
           create: [
             // GET endpoint - for listing/retrieving resources

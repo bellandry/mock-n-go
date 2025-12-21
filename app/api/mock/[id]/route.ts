@@ -193,21 +193,30 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Block manual deletion for free tier users
-    // TODO: Check user subscription plan when implemented
-    return NextResponse.json(
-      {
-        error: "Free tier mocks cannot be manually deleted. They will automatically expire after 24 hours.",
-        expiresAt: mockConfig.expiresAt,
-      },
-      { status: 403 }
+    // Check subscription to determine if manual deletion is allowed
+    const { checkFeatureAccess } = await import("@/lib/subscription-helpers");
+    const canDelete = await checkFeatureAccess(
+      mockConfig.organizationId,
+      "manualDeletion"
     );
 
-    // This code will be enabled for paid users in the future
-    // await db.mockConfig.delete({
-    //   where: { id },
-    // });
-    // return NextResponse.json({ success: true });
+    if (!canDelete) {
+      // Free tier users cannot manually delete
+      return NextResponse.json(
+        {
+          error: "Free tier mocks cannot be manually deleted. They will automatically expire after 24 hours.",
+          expiresAt: mockConfig.expiresAt,
+        },
+        { status: 403 }
+      );
+    }
+
+    // Pro/Team users can delete
+    await db.mockConfig.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting mock:", error);
     return NextResponse.json(

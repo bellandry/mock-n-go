@@ -1,9 +1,9 @@
 import { generateMockData, paginateData } from "@/lib/faker-generator";
 import { checkRateLimit, incrementRequestCount } from "@/lib/free-tier-limits";
 import {
-  createResource,
-  getResourceCount,
-  getResources,
+    createResource,
+    getResourceCount,
+    getResources,
 } from "@/lib/mock-data-manager";
 import db from "@/lib/prisma";
 import { validateRequest } from "@/lib/request-validator";
@@ -122,9 +122,16 @@ export async function GET(
         console.error("Error updating rate limit:", err)
       );
 
-      // Add watermark header
+      // Add headers
       const headers = new Headers();
-      headers.set("X-Powered-By", "Mock-n-Go Free Tier");
+      
+      // Only add watermark for Free tier
+      const { checkFeatureAccess } = await import("@/lib/subscription-helpers");
+      const hasWatermark = await checkFeatureAccess(mockConfig.organizationId, "watermark");
+      if (hasWatermark) {
+        headers.set("X-Powered-By", "Mock-n-Go Free Tier");
+      }
+      
       headers.set("X-RateLimit-Limit", rateLimit.limit.toString());
       headers.set(
         "X-RateLimit-Remaining",

@@ -1,12 +1,6 @@
 import db from "./prisma";
-
-// Free Tier Limits
-export const FREE_TIER_LIMITS = {
-  MAX_ACTIVE_MOCKS: 5,
-  MOCK_EXPIRATION_HOURS: 24,
-  DAILY_REQUEST_LIMIT: 100,
-  MAX_RECORDS_PER_MOCK: 50,
-} as const;
+import { getEffectivePlan, getOrganizationSubscription } from "./subscription-helpers";
+import { SUBSCRIPTION_LIMITS } from "./subscription-limits";
 
 /**
  * Check if organization has reached the active mock limit
@@ -14,6 +8,11 @@ export const FREE_TIER_LIMITS = {
 export async function checkActiveMockLimit(
   organizationId: string
 ): Promise<{ allowed: boolean; current: number; limit: number }> {
+  // Get subscription and effective plan
+  const subscription = await getOrganizationSubscription(organizationId);
+  const effectivePlan = getEffectivePlan(subscription);
+  const limits = SUBSCRIPTION_LIMITS[effectivePlan];
+
   const activeMocks = await db.mockConfig.count({
     where: {
       organizationId,
@@ -25,10 +24,14 @@ export async function checkActiveMockLimit(
     },
   });
 
+  // -1 means unlimited
+  const maxMocks = limits.maxActiveMocks;
+  const allowed = maxMocks === -1 || activeMocks < maxMocks;
+
   return {
-    allowed: activeMocks < FREE_TIER_LIMITS.MAX_ACTIVE_MOCKS,
+    allowed,
     current: activeMocks,
-    limit: FREE_TIER_LIMITS.MAX_ACTIVE_MOCKS,
+    limit: maxMocks === -1 ? Infinity : maxMocks,
   };
 }
 
@@ -47,11 +50,26 @@ export async function checkRateLimit(mockConfigId: string): Promise<{
     select: {
       dailyRequestCount: true,
       lastRequestDate: true,
+      organizationId: true,
     },
   });
 
   if (!mockConfig) {
     throw new Error("Mock config not found");
+  }
+
+  // Get subscription limits
+  const subscription = await getOrganizationSubscription(mockConfig.organizationId);
+  const effectivePlan = getEffectivePlan(subscription);
+  const limits = SUBSCRIPTION_LIMITS[effectivePlan];
+
+  // -1 means unlimited
+  if (limits.dailyRequestLimit === -1) {
+    return {
+      allowed: true,
+      current: 0,
+      limit: -1,
+    };
   }
 
   const now = new Date();
@@ -69,7 +87,7 @@ export async function checkRateLimit(mockConfigId: string): Promise<{
   const currentCount = isNewDay ? 0 : mockConfig.dailyRequestCount;
 
   // Check if limit exceeded
-  const allowed = currentCount < FREE_TIER_LIMITS.DAILY_REQUEST_LIMIT;
+  const allowed = currentCount < limits.dailyRequestLimit;
 
   // Calculate when the limit resets (midnight UTC)
   const tomorrow = new Date(today);
@@ -78,7 +96,7 @@ export async function checkRateLimit(mockConfigId: string): Promise<{
   return {
     allowed,
     current: currentCount,
-    limit: FREE_TIER_LIMITS.DAILY_REQUEST_LIMIT,
+    limit: limits.dailyRequestLimit,
     resetsAt: tomorrow,
   };
 }
@@ -121,15 +139,6 @@ export async function incrementRequestCount(mockConfigId: string): Promise<void>
       lastAccessedAt: now,
     },
   });
-}
-
-/**
- * Get expiration date for a new mock (24 hours from now)
- */
-export function getFreeTierExpiration(): Date {
-  const expiration = new Date();
-  expiration.setHours(expiration.getHours() + FREE_TIER_LIMITS.MOCK_EXPIRATION_HOURS);
-  return expiration;
 }
 
 /**
