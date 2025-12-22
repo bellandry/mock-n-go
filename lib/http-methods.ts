@@ -15,7 +15,7 @@ export function getMethodColor(method: string): string {
 
 export function getMethodDescription(method: string): string {
   const descriptions: Record<string, string> = {
-    GET: "Retrieve a list of resources with optional pagination",
+    GET: "Retrieve a list of resources with optional pagination or retrieve a specific resource",
     POST: "Create a new resource",
     PUT: "Update an existing resource (full replacement)",
     PATCH: "Partially update an existing resource",

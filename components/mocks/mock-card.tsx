@@ -1,3 +1,4 @@
+import { getExpirationColor } from "@/lib/mock-helper";
 import { MockConfig } from "@/types/mock";
 import { Clock, Eye, Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -44,19 +45,6 @@ export const MockCard = ({mock, onDelete}: MockCardProps) => {
 
     return () => clearInterval(interval);
   }, [mock.expiresAt]);
-
-  const getExpirationColor = () => {
-    if (!mock.expiresAt) return "text-muted-foreground";
-    const now = new Date();
-    const expiresAt = new Date(mock.expiresAt);
-    const diff = expiresAt.getTime() - now.getTime();
-    const hours = diff / (1000 * 60 * 60);
-
-    if (hours <= 0) return "text-red-400";
-    if (hours < 1) return "text-red-400";
-    if (hours < 6) return "text-yellow-400";
-    return "text-green-400";
-  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -134,7 +122,7 @@ export const MockCard = ({mock, onDelete}: MockCardProps) => {
               {mock.expiresAt && (
                 <>
                   <span>•</span>
-                  <span className={`flex items-center gap-1 ${getExpirationColor()}`}>
+                  <span className={`flex items-center gap-1 ${getExpirationColor(mock)}`}>
                     <Clock className="size-3" />
                     Expires in {timeRemaining}
                   </span>

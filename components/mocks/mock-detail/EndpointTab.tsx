@@ -47,9 +47,6 @@ export function EndpointTab({ endpoint, mockUrl, onCopy }: EndpointTabProps) {
         errorRate={endpoint.errorRate}
       />
 
-      {/* Fields/Schema */}
-      <EndpointFields fields={endpoint.fields} method={endpoint.method} />
-
       {/* Usage Examples */}
       <EndpointUsageExamples
         method={endpoint.method}
@@ -57,6 +54,9 @@ export function EndpointTab({ endpoint, mockUrl, onCopy }: EndpointTabProps) {
         hasPagination={endpoint.pagination}
         onCopy={onCopy}
       />
+
+      {/* Fields/Schema */}
+      <EndpointFields fields={endpoint.fields} method={endpoint.method} />
     </div>
   );
 }

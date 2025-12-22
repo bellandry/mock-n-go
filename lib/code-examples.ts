@@ -5,7 +5,9 @@ export function generateCurlExample(
 ): string {
   switch (method) {
     case "GET":
-      return `curl -X GET "${url}${hasPagination ? "?page=1&limit=10" : ""}"`;
+      return `curl -X GET "${url}${hasPagination ? "?page=1&limit=10" : ""}"
+
+curl -X GET "${url}/[id]`;
     case "POST":
       return `curl -X POST "${url}" \\
   -H "Content-Type: application/json" \\
@@ -32,7 +34,9 @@ export function generateFetchExample(
 ): string {
   switch (method) {
     case "GET":
-      return `fetch('${url}${hasPagination ? "?page=1&limit=10" : ""}')`;
+      return `fetch('${url}${hasPagination ? "?page=1&limit=10" : ""}')
+
+fetch('${url}/[id]')`;
     case "POST":
       return `fetch('${url}', {
   method: 'POST',
