@@ -27,7 +27,7 @@ export const WelcomeEmail = ({ name, email }: WelcomeEmailProps) => {
         <Container style={container}>
           <Section style={logoContainer}>
             <Img
-              src="https://mockngo.laclass.dev/logo.png"
+              src="https://mngo.laclass.dev/logo.png"
               width="120"
               height="36"
               alt="Mock & Go"
@@ -41,7 +41,7 @@ export const WelcomeEmail = ({ name, email }: WelcomeEmailProps) => {
             Welcome to Mock & Go! We&#39;re excited to have you on board.
           </Text>
           <Section style={buttonContainer}>
-            <Link href="https://mockngo.laclass.dev/dashboard" style={button}>
+            <Link href="https://mngo.laclass.dev/dashboard" style={button}>
               Get Started
             </Link>
           </Section>
