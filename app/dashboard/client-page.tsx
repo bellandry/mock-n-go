@@ -173,34 +173,42 @@ export default function DashboardClientPage() {
         ) : recentMocks.length > 0 ? (
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-muted-foreground">Recent Mocks</h3>
-            {recentMocks.map((mock) => (
-              <Link
-                key={mock.id}
-                href={`/dashboard/mocks/${mock.id}`}
-                className="block group"
-              >
-                <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/50 transition-all">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium truncate">{mock.name}</p>
-                      <Badge
-                        variant={mock.isActive ? "default" : "secondary"}
-                        className="shrink-0"
-                      >
-                        {mock.isActive ? "Active" : "Inactive"}
-                      </Badge>
+            {recentMocks.map((mock) => {
+              const isExpired = mock.expiresAt ? new Date(mock.expiresAt) < new Date() : false;
+              const isActive = mock.isActive && !isExpired;
+              
+              return (
+                <Link
+                  key={mock.id}
+                  href={`/dashboard/mocks/${mock.id}`}
+                  className="block group"
+                >
+                  <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/50 transition-all">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-medium truncate">{mock.name}</p>
+                        <Badge
+                          variant={isActive ? "default" : isExpired ? "destructive" : "secondary"}
+                          className="shrink-0"
+                        >
+                          {isActive ? "Active" : isExpired ? "Expired" : "Inactive"}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Clock className="w-3 h-3" />
+                        <span>{formatDate(mock.createdAt)}</span>
+                        <span>•</span>
+                        <span>{mock.accessCount} calls</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                        {mock.description}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Clock className="w-3 h-3" />
-                      <span>{formatDate(mock.createdAt)}</span>
-                      <span>•</span>
-                      <span>{mock.accessCount} calls</span>
-                    </div>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0 ml-2" />
                   </div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0 ml-2" />
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-8 text-muted-foreground">
