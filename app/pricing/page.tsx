@@ -3,7 +3,18 @@ import { LandingNavbar } from "@/components/landing/navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, X } from "lucide-react";
+import { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Pricing - Transparent Plans for Every Developer",
+  description: "Choose the perfect plan for your needs. Start free with 5 active mocks, upgrade to Pro for unlimited mocks, or go Team for collaboration features. No hidden fees, cancel anytime.",
+  openGraph: {
+    title: "Mock'n'Go Pricing - Transparent Plans for Every Developer",
+    description: "Start free, upgrade when you need more. Simple, transparent pricing for mock API generation.",
+    url: "https://mngo.laclass.dev/pricing",
+  },
+};
 
 export default function PricingPage() {
   const plans = [

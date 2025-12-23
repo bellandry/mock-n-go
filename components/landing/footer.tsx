@@ -1,6 +1,7 @@
 import { Separator } from "@/components/ui/separator";
 import { Github, Linkedin, Mail, Twitter } from "lucide-react";
 import Link from "next/link";
+import { Logo } from "./logo";
 
 export function LandingFooter() {
   const footerLinks = {
@@ -43,15 +44,8 @@ export function LandingFooter() {
         {/* Main Footer Content */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           {/* Brand Column */}
-          <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-linear-to-br from-primary to-orange-600 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">M</span>
-              </div>
-              <span className="text-xl font-bold bg-linear-to-r from-primary to-orange-600 bg-clip-text text-transparent">
-                Mock'n'Go
-              </span>
-            </Link>
+          <div className="col-span-2 md:col-span-1 space-y-4">
+            <Logo />
             <p className="text-sm text-muted-foreground mb-4">
               Create realistic REST API mocks instantly. No configuration, no setup.
             </p>
