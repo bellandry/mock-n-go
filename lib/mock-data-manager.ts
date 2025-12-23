@@ -308,7 +308,7 @@ async function cleanupOldData(mockConfigId: string): Promise<void> {
     await db.mockData.deleteMany({
       where: {
         id: {
-          in: toDelete.map((d) => d.id),
+          in: toDelete.map((d: any) => d.id),
         },
       },
     });
