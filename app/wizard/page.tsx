@@ -97,7 +97,7 @@ export default function WizardPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-linear-to-br from-red-50 via-transparent to-red-100">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-orange-700/5 via-transparent to-primary/10">
       <Card className="w-full max-w-md p-8 space-y-2 shadow-xl">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold ">
@@ -130,7 +130,7 @@ export default function WizardPage() {
 
               {/* Upload Button */}
               <label htmlFor="photo-upload">
-                <div className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-muted-foreground hover:bg-muted rounded-lg transition-colors">
+                <div className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-muted hover:bg-muted-foreground rounded-lg transition-colors">
                   <Upload className="w-4 h-4" />
                   <span className="text-sm font-medium">
                     {isUploading ? "Uploading..." : "Upload Photo"}
