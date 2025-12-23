@@ -130,7 +130,7 @@ export default function WizardPage() {
 
               {/* Upload Button */}
               <label htmlFor="photo-upload">
-                <div className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-muted-foreground hover:bg-muted rounded-lg transition-colors">
+                <div className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-muted hover:bg-muted-foreground rounded-lg transition-colors">
                   <Upload className="w-4 h-4" />
                   <span className="text-sm font-medium">
                     {isUploading ? "Uploading..." : "Upload Photo"}
