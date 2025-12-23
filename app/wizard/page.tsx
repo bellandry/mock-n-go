@@ -97,11 +97,11 @@ export default function WizardPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-linear-to-br from-red-50 via-white to-red-100">
-      <Card className="w-full max-w-md p-8 space-y-6 shadow-xl">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-linear-to-br from-red-50 via-transparent to-red-100">
+      <Card className="w-full max-w-md p-8 space-y-2 shadow-xl">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold ">
-            Welcome to Mock & Go! 🎉
+            Welcome to Mock'n <span className="text-primary">Go</span>! 🎉
           </h1>
           <p className="text-gray-600">
             Let's get started by setting up your profile
@@ -116,7 +116,7 @@ export default function WizardPage() {
             </Label>
             <div className="flex flex-col items-center gap-4">
               {/* Avatar Preview */}
-              <div className="relative w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border-2 border-gray-200">
+              <div className="relative w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border-2 border-primary/50">
                 {profileImage ? (
                   <img
                     src={profileImage}
@@ -124,13 +124,13 @@ export default function WizardPage() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <User className="w-12 h-12 text-gray-400" />
+                  <User className="w-12 h-12 text-primary/80" />
                 )}
               </div>
 
               {/* Upload Button */}
               <label htmlFor="photo-upload">
-                <div className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                <div className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-muted-foreground hover:bg-muted rounded-lg transition-colors">
                   <Upload className="w-4 h-4" />
                   <span className="text-sm font-medium">
                     {isUploading ? "Uploading..." : "Upload Photo"}

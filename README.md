@@ -1,36 +1,248 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mock'n Go 🚀
 
-## Getting Started
+> **Create realistic REST API mocks instantly. No configuration, no setup.**
 
-First, run the development server:
+Mock'n Go is a powerful SaaS platform that allows developers to generate realistic mock APIs in seconds. Perfect for frontend development, testing, and prototyping.
 
+🌐 **Live Demo**: [mngo.laclass.dev](https://mngo.laclass.dev)
+
+---
+
+## ✨ Features
+
+- ⚡ **Lightning Fast** - Generate mock APIs in seconds
+- 🎯 **Full REST Support** - GET, POST, PUT, PATCH, DELETE methods
+- 📊 **Realistic Data** - Powered by Faker.js for authentic mock data
+- 🔄 **Pagination** - Built-in pagination support with customizable page sizes
+- ⏱️ **Custom Delays** - Simulate real-world latency
+- 🎲 **Random Errors** - Test error handling with configurable error rates
+- 🔐 **Secure & Reliable** - Rate limiting, expiration controls, and organization-based access
+- 🌐 **Instant Deployment** - Your mock API is live instantly with a unique URL
+- 📱 **Responsive Dashboard** - Manage all your mocks from a beautiful interface
+- 👥 **Team Collaboration** - Share mocks with your team (Pro/Team plans)
+
+---
+
+## 🛠️ Tech Stack
+
+### **Frontend**
+- **Next.js 16** - React framework with App Router
+- **React 19** - Latest React features
+- **TypeScript** - Type-safe development
+- **Tailwind CSS 4** - Utility-first styling
+- **shadcn/ui** - Beautiful, accessible components
+- **Lucide Icons** - Modern icon library
+
+### **Backend**
+- **Next.js API Routes** - Serverless API endpoints
+- **Prisma** - Type-safe ORM
+- **PostgreSQL** - Production database
+- **Better Auth** - Authentication & authorization
+- **Faker.js** - Realistic data generation
+
+### **Infrastructure**
+- **Vercel** - Hosting & deployment
+- **Uploadthing** - File uploads
+- **Nodemailer** - Email notifications
+- **React Email** - Beautiful email templates
+
+---
+
+## 🚀 Getting Started
+
+### **Prerequisites**
+
+- Node.js 18+ 
+- PostgreSQL database
+- npm/yarn/pnpm
+
+### **Installation**
+
+1. **Clone the repository**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/bellandry/mock-n-go.git
+cd mock-n-go
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Install dependencies**
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+if any installation error, run:
+```bash
+npm install --legacy-peer-deps
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. **Set up environment variables**
 
-## Learn More
+Create a `.env` file in the root directory:
 
-To learn more about Next.js, take a look at the following resources:
+```env
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/mockngo"
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Better Auth
+BETTER_AUTH_SECRET="your-secret-key"
+BETTER_AUTH_URL="http://localhost:3000"
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# GitHub OAuth (optional)
+GITHUB_CLIENT_ID="your-github-client-id"
+GITHUB_CLIENT_SECRET="your-github-client-secret"
 
-## Deploy on Vercel
+# Email (Nodemailer)
+EMAIL_HOST="smtp.gmail.com"
+EMAIL_PORT="587"
+EMAIL_USER="your-email@gmail.com"
+EMAIL_PASSWORD="your-app-password"
+EMAIL_FROM="Mock'n Go <noreply@mngo.laclass.dev>"
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# App
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+4. **Set up the database**
+```bash
+npx prisma generate
+npx prisma db push
+```
+
+5. **Run the development server**
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) to see the app.
+
+---
+
+## 📁 Project Structure
+
+```
+mock-n-go/
+├── app/                      # Next.js App Router
+│   ├── (auth)/              # Authentication pages
+│   ├── api/                 # API routes
+│   │   └── mock/           # Mock API endpoints
+│   ├── dashboard/          # Dashboard pages
+│   ├── check-email/        # Email verification
+│   └── pricing/            # Pricing page
+├── components/              # React components
+│   ├── landing/            # Landing page components
+│   ├── mocks/              # Mock management components
+│   ├── ui/                 # shadcn/ui components
+│   └── email/              # Email templates
+├── lib/                     # Utility functions
+│   ├── auth.ts             # Better Auth configuration
+│   ├── prisma.ts           # Prisma client
+│   ├── faker-generator.ts  # Mock data generation
+│   ├── subscription-*.ts   # Subscription management
+│   └── mock-*.ts           # Mock management utilities
+├── prisma/                  # Database schema
+├── public/                  # Static assets
+└── types/                   # TypeScript types
+```
+
+---
+
+## 🎯 Key Features Explained
+
+### **Mock API Generation**
+
+Create a mock API by defining:
+- **Fields**: Choose from 100+ field types (name, email, phone, etc.)
+- **Count**: Number of records to generate
+- **Pagination**: Enable/disable pagination
+- **Delays**: Simulate network latency
+- **Error Rates**: Test error handling
+
+### **Subscription Plans**
+
+- **Free**: 5 active mocks, 24h duration, 100 requests/day
+- **Pro**: Unlimited mocks, 30 days duration, unlimited requests
+- **Team**: Everything in Pro + team collaboration + unlimited duration
+
+### **Authentication**
+
+- Email/Password
+- Magic Link (passwordless)
+- GitHub OAuth
+- Organization-based access control
+
+---
+
+## 🔧 Development
+
+### **Available Scripts**
+
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run ESLint
+```
+
+### **Database Management**
+
+```bash
+npx prisma studio    # Open Prisma Studio
+npx prisma generate  # Generate Prisma Client
+npx prisma db push   # Push schema changes
+npx prisma migrate dev # Create migration
+```
+
+---
+
+## 📦 Deployment
+
+### **Vercel (Recommended)**
+
+1. Push your code to GitHub
+2. Import project in Vercel
+3. Add environment variables
+4. Deploy!
+
+### **Environment Variables for Production**
+
+Make sure to set all required environment variables in your hosting platform.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+## 🙏 Acknowledgments
+
+- [Next.js](https://nextjs.org/) - The React Framework
+- [Prisma](https://www.prisma.io/) - Next-generation ORM
+- [Better Auth](https://www.better-auth.com/) - Authentication for Next.js
+- [Faker.js](https://fakerjs.dev/) - Generate massive amounts of fake data
+- [shadcn/ui](https://ui.shadcn.com/) - Beautiful UI components
+- [Vercel](https://vercel.com/) - Hosting & deployment
+
+---
+
+## 📞 Support
+
+- **Website**: [mngo.laclass.dev](https://mngo.laclass.dev)
+- **Email**: contact@laclass.dev
+- **GitHub Issues**: [Create an issue](https://github.com/bellandry/mock-n-go/issues)
+
+---
+
+Made with ❤️ by [Landry Bella](https://github.com/bellandry)
