@@ -1,3 +1,4 @@
+import { checkRateLimit } from "@/lib/free-tier-limits";
 import {
   deleteResource,
   getResourceById,
@@ -6,6 +7,7 @@ import {
 } from "@/lib/mock-data-manager";
 import db from "@/lib/prisma";
 import { validateRequest } from "@/lib/request-validator";
+import { updateEndpointCount, updateHeaders } from "@/lib/subscription-helpers";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -37,15 +39,30 @@ export async function GET(
       );
     }
 
+    // Check rate limit (100 requests/day for free tier - applies to entire mock)
+    const rateLimit = await checkRateLimit(mockConfig.id);
+    const headers = updateHeaders(rateLimit);
+
+    // Check if mock has expired
+    if (mockConfig.expiresAt && new Date() > mockConfig.expiresAt) {
+      return NextResponse.json(
+        { error: "Mock endpoint has expired" },
+        { status: 410, headers }
+      );
+    }
+
     // Get resource
     const resource = await getResourceById(mockConfig.id, resourceId);
 
     if (!resource) {
       return NextResponse.json(
         { error: "Resource not found" },
-        { status: 404 }
+        { status: 404, headers }
       );
     }
+
+    // Update access metrics
+    updateEndpointCount(mockConfig.id)
 
     return NextResponse.json(resource);
   } catch (error) {
@@ -91,6 +108,18 @@ export async function PUT(
       );
     }
 
+    // Check rate limit (100 requests/day for free tier - applies to entire mock)
+    const rateLimit = await checkRateLimit(mockConfig.id);
+    const headers = updateHeaders(rateLimit);
+
+    // Check if mock has expired
+    if (mockConfig.expiresAt && new Date() > mockConfig.expiresAt) {
+      return NextResponse.json(
+        { error: "Mock endpoint has expired" },
+        { status: 410, headers }
+      );
+    }
+
     const endpoint = mockConfig.endpoints[0];
 
     // Parse request body
@@ -102,23 +131,27 @@ export async function PUT(
       if (!validation.valid) {
         return NextResponse.json(
           { error: "Validation failed", details: validation.errors },
-          { status: 400 }
+          { status: 400, headers }
         );
       }
     }
 
+    // Get resources
+    let resource = await getResourceById(mockConfig.id, resourceId);
+
+    if (!resource) {
+      return NextResponse.json(
+        { error: "Resource not found" },
+        { status: 404, headers }
+      );
+    }
+
     // Replace resource
-    const resource = await replaceResource(mockConfig.id, resourceId, body);
+    resource = await replaceResource(mockConfig.id, resourceId, body);
+
 
     // Update access metrics
-    db.mockEndpoint
-      .update({
-        where: { id: endpoint.id },
-        data: {
-          accessCount: { increment: 1 },
-        },
-      })
-      .catch((err) => console.error("Error updating endpoint access count:", err));
+    updateEndpointCount(mockConfig.id, endpoint)
 
     return NextResponse.json(resource);
   } catch (error: any) {
@@ -170,6 +203,18 @@ export async function PATCH(
       );
     }
 
+    // Check rate limit (100 requests/day for free tier - applies to entire mock)
+    const rateLimit = await checkRateLimit(mockConfig.id);
+    const headers = updateHeaders(rateLimit);
+
+    // Check if mock has expired
+    if (mockConfig.expiresAt && new Date() > mockConfig.expiresAt) {
+      return NextResponse.json(
+        { error: "Mock endpoint has expired" },
+        { status: 410, headers }
+      );
+    }
+
     const endpoint = mockConfig.endpoints[0];
 
     // Parse request body
@@ -187,18 +232,21 @@ export async function PATCH(
       }
     }
 
+    // Get resources
+    let resource = await getResourceById(mockConfig.id, resourceId);
+
+    if (!resource) {
+      return NextResponse.json(
+        { error: "Resource not found" },
+        { status: 404, headers }
+      );
+    }
+
     // Update resource
-    const resource = await updateResource(mockConfig.id, resourceId, body);
+    resource = await updateResource(mockConfig.id, resourceId, body);
 
     // Update access metrics
-    db.mockEndpoint
-      .update({
-        where: { id: endpoint.id },
-        data: {
-          accessCount: { increment: 1 },
-        },
-      })
-      .catch((err) => console.error("Error updating endpoint access count:", err));
+    updateEndpointCount(mockConfig.id, endpoint)
 
     return NextResponse.json(resource);
   } catch (error: any) {
@@ -250,7 +298,29 @@ export async function DELETE(
       );
     }
 
+    // Check rate limit (100 requests/day for free tier - applies to entire mock)
+    const rateLimit = await checkRateLimit(mockConfig.id);
+    const headers = updateHeaders(rateLimit);
+
+    // Check if mock has expired
+    if (mockConfig.expiresAt && new Date() > mockConfig.expiresAt) {
+      return NextResponse.json(
+        { error: "Mock endpoint has expired" },
+        { status: 410, headers }
+      );
+    }
+
     const endpoint = mockConfig.endpoints[0];
+
+    // Get resources
+    const resource = await getResourceById(mockConfig.id, resourceId);
+
+    if (!resource) {
+      return NextResponse.json(
+        { error: "Resource not found" },
+        { status: 404, headers }
+      );
+    }
 
     // Delete resource
     const deleted = await deleteResource(mockConfig.id, resourceId);
@@ -263,14 +333,7 @@ export async function DELETE(
     }
 
     // Update access metrics
-    db.mockEndpoint
-      .update({
-        where: { id: endpoint.id },
-        data: {
-          accessCount: { increment: 1 },
-        },
-      })
-      .catch((err) => console.error("Error updating endpoint access count:", err));
+    updateEndpointCount(mockConfig.id, endpoint)
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

@@ -1,42 +1,55 @@
 import { Field } from "../types/mock";
 import { generateFieldValue } from "./faker-generator";
 import db from "./prisma";
-
-// Free tier limit for users without subscription
-const FREE_TIER_LIMIT = 50;
+import { getEffectivePlan, getOrganizationSubscription } from "./subscription-helpers";
+import { SUBSCRIPTION_LIMITS } from "./subscription-limits";
 
 /**
  * Generate a resource ID based on field configuration
  */
-export function generateResourceId(fields: Field[]): string {
-  // Find ID field
+function generateResourceId(fields: Field[]): string {
   const idField = fields.find(
     (f) => f.name === "id" || f.name === "_id" || f.name === "ID"
   );
 
   if (!idField) {
-    // No ID field defined, use UUID
-    return crypto.randomUUID();
+    return Math.random().toString(36).substring(2, 15);
   }
 
-  // Generate ID based on field type
   return String(generateFieldValue(idField));
 }
 
 /**
- * Create a new resource
+ * Create a new resource for a mock
  */
 export async function createResource(
   mockConfigId: string,
   data: any,
   fields: Field[]
 ): Promise<any> {
-  // Check free tier limit
-  const currentCount = await getResourceCount(mockConfigId);
-  if (currentCount >= FREE_TIER_LIMIT) {
-    throw new Error(
-      `Free tier limit reached. You can only store up to ${FREE_TIER_LIMIT} records per mock. Upgrade your plan for unlimited storage.`
-    );
+  // Get mock config to find organization
+  const mockConfig = await db.mockConfig.findUnique({
+    where: { id: mockConfigId },
+    select: { organizationId: true },
+  });
+
+  if (!mockConfig) {
+    throw new Error("Mock config not found");
+  }
+
+  // Check subscription-based record limit
+  const subscription = await getOrganizationSubscription(mockConfig.organizationId);
+  const effectivePlan = getEffectivePlan(subscription);
+  const limits = SUBSCRIPTION_LIMITS[effectivePlan];
+
+  // -1 means unlimited
+  if (limits.maxRecordsPerMock !== -1) {
+    const currentCount = await getResourceCount(mockConfigId);
+    if (currentCount >= limits.maxRecordsPerMock) {
+      throw new Error(
+        `Record limit reached. ${effectivePlan} plan allows up to ${limits.maxRecordsPerMock} records per mock. Upgrade your plan for more storage.`
+      );
+    }
   }
 
   // Find ID field in schema
@@ -83,28 +96,46 @@ export async function createResource(
 }
 
 /**
- * Seed multiple random resources at once
+ * Seed random data for a mock
  */
 export async function seedRandomData(
   mockConfigId: string,
   fields: Field[],
   count: number
 ): Promise<any[]> {
-  // Check free tier limit
+  // Get mock config to find organization
+  const mockConfig = await db.mockConfig.findUnique({
+    where: { id: mockConfigId },
+    select: { organizationId: true },
+  });
+
+  if (!mockConfig) {
+    throw new Error("Mock config not found");
+  }
+
+  // Check subscription-based record limit
+  const subscription = await getOrganizationSubscription(mockConfig.organizationId);
+  const effectivePlan = getEffectivePlan(subscription);
+  const limits = SUBSCRIPTION_LIMITS[effectivePlan];
+
   const currentCount = await getResourceCount(mockConfigId);
-  const availableSlots = FREE_TIER_LIMIT - currentCount;
-  
-  if (availableSlots <= 0) {
-    throw new Error(
-      `Free tier limit reached. You can only store up to ${FREE_TIER_LIMIT} records per mock.`
-    );
+
+  // -1 means unlimited
+  if (limits.maxRecordsPerMock !== -1) {
+    const availableSlots = limits.maxRecordsPerMock - currentCount;
+    
+    if (availableSlots <= 0) {
+      throw new Error(
+        `Record limit reached. ${effectivePlan} plan allows up to ${limits.maxRecordsPerMock} records per mock.`
+      );
+    }
+    
+    // Limit the count to available slots
+    count = Math.min(count, availableSlots);
   }
   
-  // Limit the count to available slots
-  const actualCount = Math.min(count, availableSlots);
-  
   const { generateMockData } = await import("./faker-generator");
-  const mockData = generateMockData(fields, actualCount);
+  const mockData = generateMockData(fields, count);
   
   const createdResources = [];
   

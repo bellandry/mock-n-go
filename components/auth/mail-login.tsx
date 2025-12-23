@@ -73,7 +73,7 @@ function MailLogin({ className }: { className?: string }) {
           </div>
         )}
 
-        <Label className="flex flex-col font-medium w-full items-start">
+        <Label className="flex my-1 flex-col font-medium w-full items-start">
           Adresse mail
         </Label>
         <Input
