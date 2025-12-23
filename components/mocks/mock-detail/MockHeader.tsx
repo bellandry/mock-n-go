@@ -1,9 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { toastManager } from "@/components/ui/toast";
 import { getExpirationColor } from "@/lib/mock-helper";
 import { MockConfig } from "@/types/mock";
-import { Clock, Edit, Loader2, Trash2 } from "lucide-react";
+import { Clock, Edit, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface MockHeaderProps {
@@ -17,7 +19,10 @@ export function MockHeader({
   isDeleting,
   onDelete,
 }: MockHeaderProps) {
+  const router = useRouter();
   const [timeRemaining, setTimeRemaining] = useState<string>("");
+  const [isReactivating, setIsReactivating] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
     if (!mock.expiresAt) return;
@@ -29,8 +34,11 @@ export function MockHeader({
 
       if (diff <= 0) {
         setTimeRemaining("Expired");
+        setIsExpired(true);
         return;
       }
+
+      setIsExpired(false);
 
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -47,6 +55,39 @@ export function MockHeader({
 
     return () => clearInterval(interval);
   }, [mock.expiresAt]);
+
+  const handleReactivate = async () => {
+    setIsReactivating(true);
+    try {
+      const response = await fetch(`/api/mock/${mock.id}/reactivate`, {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to reactivate mock");
+      }
+
+      toastManager.add({
+        title: "Mock reactivated",
+        description: data.message || "Your mock has been reactivated successfully",
+        type: "success",
+      });
+      setIsExpired(true)
+
+      // Refresh the page to show updated data
+      router.refresh();
+    } catch (error: any) {
+      toastManager.add({
+        title: "Reactivation failed",
+        description: error.message || "Failed to reactivate mock",
+        type: "error",
+      });
+    } finally {
+      setIsReactivating(false);
+    }
+  };
 
   return (
     <div className="flex flex-col md:flex-row gap-4 items-start justify-between">
@@ -78,6 +119,25 @@ export function MockHeader({
         )}
       </div>
       <div className="flex gap-2">
+        {isExpired && (
+          <Button
+            variant="default"
+            onClick={handleReactivate}
+            disabled={isReactivating}
+          >
+            {isReactivating ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Reactivating...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="w-4 h-4" />
+                Reactivate
+              </>
+            )}
+          </Button>
+        )}
         <Link href={`/dashboard/mocks/${mock.id}/edit`}>
           <Button variant="outline">
             <Edit className="w-4 h-4" />
