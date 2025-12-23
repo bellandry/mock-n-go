@@ -115,7 +115,7 @@ export async function GET(
             lastAccessedAt: new Date(),
           },
         })
-        .catch((err) => console.error("Error updating access count:", err));
+        .catch((err: any) => console.error("Error updating access count:", err));
 
       // Increment rate limit counter
       incrementRequestCount(mockConfig.id).catch((err: any) =>
