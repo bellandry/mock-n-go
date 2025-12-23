@@ -221,7 +221,7 @@ export async function GET(req: NextRequest) {
 
     // Add mock URLs to each mock
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
-    const mocksWithUrls = mocks.map((mock) => ({
+    const mocksWithUrls = mocks.map((mock: any) => ({
       ...mock,
       mockUrl: `${baseUrl}/api/mock/${mock.id}/${mock.basePath}`,
     }));
