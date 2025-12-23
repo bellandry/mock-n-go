@@ -97,7 +97,7 @@ export default function WizardPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-linear-to-br from-red-50 via-transparent to-red-100">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-orange-700/5 via-transparent to-primary/10">
       <Card className="w-full max-w-md p-8 space-y-2 shadow-xl">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold ">
