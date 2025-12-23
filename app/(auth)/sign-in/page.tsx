@@ -8,7 +8,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "../../../component
 
 export default function SignIn() {
   return (
-    <div className="flex h-screen w-screen items-center justify-center bg-linear-to-br from-orange-700/5 via-transparent to-primary/10">
+    <div className="flex h-screen w-screen items-center justify-center bg-linear-to-br from-orange-700/5 via-transparent to-primary/10 px-4">
       <div space-y-2>
         <Link href="/">
           <Button variant={"link"}>
@@ -18,8 +18,8 @@ export default function SignIn() {
         </Link>
         <Card className="relative w-full max-w-sm overflow-hidden p-6">
           <div className="flex justify-center">
-            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
-              <Lock className="w-8 h-8 text-red-600" />
+            <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center">
+              <Lock className="w-8 h-8 text-red-100" />
             </div>
           </div>
           <CardHeader className="text-center">

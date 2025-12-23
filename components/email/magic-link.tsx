@@ -26,7 +26,7 @@ export const MagicLink = ({ name, magicLink }: MagicLinkProps) => {
         <Container style={container}>
           <Section style={logoContainer}>
             <img
-              src="https://mockngo.laclass.dev/logo.png"
+              src="https://mngo.laclass.dev/logo.png"
               width="120"
               height="36"
               alt="Mock & Go"
@@ -60,7 +60,7 @@ export const MagicLink = ({ name, magicLink }: MagicLinkProps) => {
 
 MagicLink.PreviewProps = {
   name: "Mock & Go",
-  magicLink: "https://creavvy.com/magic-link?token=abc123",
+  magicLink: "https://mngo.laclass.dev/magic-link?token=abc123",
 } as MagicLinkProps;
 
 export default MagicLink;
