@@ -169,3 +169,96 @@ export function getTrialDaysRemaining(subscription: {
   const diff = subscription.trialEndsAt!.getTime() - now.getTime();
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
+
+/**
+ * Update subscription from Dodo Payments data
+ * Used to sync subscription state with Dodo Payments
+ */
+export async function updateSubscriptionFromDodo(
+  organizationId: string,
+  dodoData: {
+    subscriptionId: string;
+    customerId: string;
+    productId: string;
+    status: string;
+    currentPeriodStart: Date;
+    currentPeriodEnd: Date;
+  }
+) {
+  // Map Dodo product ID to internal plan
+  const proProdId = process.env.DODO_PRO_PRODUCT_ID;
+  const teamProdId = process.env.DODO_TEAM_PRODUCT_ID;
+  
+  let plan = SubscriptionPlan.FREE as keyof typeof SubscriptionPlan;
+  if (dodoData.productId === proProdId) {
+    plan = SubscriptionPlan.PRO;
+  } else if (dodoData.productId === teamProdId) {
+    plan = SubscriptionPlan.TEAM;
+  }
+
+  // Map status
+  let status = SubscriptionStatus.ACTIVE as keyof typeof SubscriptionStatus;
+  switch (dodoData.status.toLowerCase()) {
+    case 'canceled':
+    case 'cancelled':
+      status = SubscriptionStatus.CANCELED;
+      break;
+    case 'past_due':
+      status = SubscriptionStatus.PAST_DUE;
+      break;
+    case 'trialing':
+      status = SubscriptionStatus.TRIALING;
+      break;
+  }
+
+  return await db.subscription.upsert({
+    where: { organizationId },
+    create: {
+      organizationId,
+      plan,
+      status,
+      dodoCustomerId: dodoData.customerId,
+      dodoSubscriptionId: dodoData.subscriptionId,
+      dodoProductId: dodoData.productId,
+      currentPeriodStart: dodoData.currentPeriodStart,
+      currentPeriodEnd: dodoData.currentPeriodEnd,
+      isTrialing: status === SubscriptionStatus.TRIALING,
+    },
+    update: {
+      plan,
+      status,
+      dodoCustomerId: dodoData.customerId,
+      dodoSubscriptionId: dodoData.subscriptionId,
+      dodoProductId: dodoData.productId,
+      currentPeriodStart: dodoData.currentPeriodStart,
+      currentPeriodEnd: dodoData.currentPeriodEnd,
+      isTrialing: status === SubscriptionStatus.TRIALING,
+    },
+  });
+}
+
+/**
+ * Cancel a subscription
+ * Note: Actual cancellation should be done via Dodo Payments customer portal.
+ * This function is for internal use to mark a subscription as canceled in our database
+ * when we receive a webhook notification.
+ */
+export async function cancelSubscription(organizationId: string) {
+  const subscription = await getOrganizationSubscription(organizationId);
+
+  if (!subscription.dodoSubscriptionId) {
+    throw new Error("No Dodo Payments subscription found");
+  }
+
+  // Update local database to mark as canceled
+  // The actual cancellation should be done via Dodo Payments customer portal
+  // or will be synced via webhook when customer cancels
+  return await db.subscription.update({
+    where: { organizationId },
+    data: {
+      status: SubscriptionStatus.CANCELED,
+    },
+  });
+}
+
+

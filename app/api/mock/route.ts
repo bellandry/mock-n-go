@@ -1,8 +1,7 @@
 import { auth } from "@/lib/auth";
-import { checkActiveMockLimit } from "@/lib/free-tier-limits";
 import db from "@/lib/prisma";
 import { getEffectivePlan, getOrganizationSubscription } from "@/lib/subscription-helpers";
-import { getMockExpiration } from "@/lib/subscription-limits";
+import { getMockExpiration, getSubscriptionLimits } from "@/lib/subscription-limits";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -27,12 +26,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check free tier active mock limit
-    const mockLimit = await checkActiveMockLimit(activeOrganizationId);
-    if (!mockLimit.allowed) {
+    // Get subscription and check limits
+    const subscription = await getOrganizationSubscription(activeOrganizationId);
+    const effectivePlan = getEffectivePlan(subscription);
+    const limits = getSubscriptionLimits(effectivePlan);
+
+    // Check active mock limit
+    const activeMocks = await db.mockConfig.count({
+      where: {
+        organizationId: activeOrganizationId,
+        isActive: true,
+        OR: [
+          { expiresAt: null },
+          { expiresAt: { gt: new Date() } }
+        ]
+      }
+    });
+
+    if (limits.maxActiveMocks !== -1 && activeMocks >= limits.maxActiveMocks) {
       return NextResponse.json(
         {
-          error: `Free tier limit reached. You can only have ${mockLimit.limit} active mocks simultaneously. Current: ${mockLimit.current}/${mockLimit.limit}`,
+          error: `${effectivePlan} plan limit reached. You can only have ${limits.maxActiveMocks} active mocks simultaneously. Current: ${activeMocks}/${limits.maxActiveMocks}. Upgrade to Pro for unlimited mocks.`,
         },
         { status: 403 }
       );
@@ -78,9 +92,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get subscription to determine expiration
-    const subscription = await getOrganizationSubscription(activeOrganizationId);
-    const effectivePlan = getEffectivePlan(subscription);
+    // Get subscription-based expiration (already fetched above)
     const expiresAt = getMockExpiration(effectivePlan);
 
     // Create mock config with all HTTP method endpoints
