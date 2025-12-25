@@ -262,10 +262,11 @@ model Subscription {
   trialEndsAt DateTime?
   isTrialing  Boolean  @default(false)
 
-  // Stripe integration (for future)
-  stripeCustomerId     String? @unique
-  stripeSubscriptionId String? @unique
-  stripePriceId        String?
+  // Dodo Payments integration
+  dodoCustomerId       String? @unique
+  dodoSubscriptionId   String? @unique
+  dodoProductId        String?
+  dodoCheckoutSessionId String?
 
   // Metadata
   createdAt DateTime @default(now())
