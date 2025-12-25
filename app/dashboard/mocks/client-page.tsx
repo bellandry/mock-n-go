@@ -1,11 +1,15 @@
 "use client";
 
 import { MockCard } from "@/components/mocks/mock-card";
+import { UpgradePrompt } from "@/components/subscription/upgrade-prompt";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toastManager } from "@/components/ui/toast";
 import { useActiveOrganization } from "@/lib/auth-client";
+import { getSubscriptionLimits } from "@/lib/subscription-limits";
 import { MockConfig } from "@/types/mock";
+import { SubscriptionPlan } from "@prisma/client";
 import { Loader2, Plus } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -14,10 +18,13 @@ export default function MocksClientPage() {
   const { data: activeOrg } = useActiveOrganization();
   const [mocks, setMocks] = useState<MockConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [subscription, setSubscription] = useState<any>(null);
+  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false);
 
   useEffect(() => {
     if (activeOrg?.id) {
       fetchMocks();
+      fetchSubscription();
     }
   }, [activeOrg?.id]);
 
@@ -33,6 +40,21 @@ export default function MocksClientPage() {
       console.error("Error fetching mocks:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchSubscription = async () => {
+    try {
+      setIsSubscriptionLoading(true);
+      const res = await fetch("/api/subscription");
+      if (res.ok) {
+        const data = await res.json();
+        setSubscription(data);
+      }
+    } catch (error) {
+      console.error("Error fetching subscription:", error);
+    } finally {
+      setIsSubscriptionLoading(false);
     }
   };
 
@@ -76,23 +98,47 @@ export default function MocksClientPage() {
     }
   };
 
+  const plan = subscription?.plan || SubscriptionPlan.FREE;
+  const limits = getSubscriptionLimits(plan);
+  const activeMocks = mocks.filter(m => m.isActive && (!m.expiresAt || new Date(m.expiresAt) > new Date())).length;
+  const canCreate = limits.maxActiveMocks === -1 || activeMocks < limits.maxActiveMocks;
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between">
+      <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold">Mock APIs</h1>
-          <p className="text-muted-foreground mt-1">
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-3xl font-bold">Mock APIs</h1>
+            <Badge variant="default" className="text-xs">
+              {plan}
+            </Badge>
+          </div>
+          <p className="text-muted-foreground">
             Create and manage your mock API endpoints
           </p>
+          {!isSubscriptionLoading && limits.maxActiveMocks !== -1 && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Active mocks: <span className="font-medium">{activeMocks}</span> / {limits.maxActiveMocks}
+            </p>
+          )}
         </div>
         <Link href="/dashboard/mocks/new">
-          <Button>
+          <Button disabled={!canCreate}>
             <Plus className="w-4 h-4" />
             New Mock
           </Button>
         </Link>
       </div>
+
+      {/* Upgrade prompt if limit reached */}
+      {!canCreate && (
+        <UpgradePrompt
+          title="Mock Limit Reached"
+          message={`You've reached the maximum of ${limits.maxActiveMocks} active mocks on the ${plan} plan. Upgrade to Pro for unlimited mocks.`}
+          variant="banner"
+        />
+      )}
 
       {/* Mocks List */}
       {isLoading ? (

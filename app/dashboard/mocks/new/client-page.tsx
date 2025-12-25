@@ -4,19 +4,21 @@ import { MockFormBasicInfo } from "@/components/mocks/mock-form/MockFormBasicInf
 import { MockFormFields } from "@/components/mocks/mock-form/MockFormFields";
 import { MockFormPreview } from "@/components/mocks/mock-form/MockFormPreview";
 import { MockFormResponseConfig } from "@/components/mocks/mock-form/MockFormResponseConfig";
-import { FreeTierBadge } from "@/components/ui/free-tier-badge";
+import { UpgradePrompt } from "@/components/subscription/upgrade-prompt";
+import { Badge } from "@/components/ui/badge";
 import { toastManager } from "@/components/ui/toast";
 import { useMockForm } from "@/hooks/useMockForm";
+import { getSubscriptionLimits } from "@/lib/subscription-limits";
+import { SubscriptionPlan } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function NewMockClientPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeMockLimit, setActiveMockLimit] = useState<{
-    current: number;
-    limit: number;
-  } | null>(null);
+  const [subscription, setSubscription] = useState<any>(null);
+  const [activeMockCount, setActiveMockCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   const {
     formData,
@@ -30,12 +32,35 @@ export default function NewMockClientPage() {
     validateForm,
   } = useMockForm();
 
-  // Fetch active mock count
+  // Fetch subscription and active mock count
   useEffect(() => {
-    fetch("/api/mock/limits")
-      .then((res) => res.json())
-      .then((data) => setActiveMockLimit(data))
-      .catch((err) => console.error("Error fetching limits:", err));
+    const fetchData = async () => {
+      try {
+        const [subRes, mocksRes] = await Promise.all([
+          fetch("/api/subscription"),
+          fetch("/api/mock"),
+        ]);
+
+        if (subRes.ok) {
+          const subData = await subRes.json();
+          setSubscription(subData);
+        }
+
+        if (mocksRes.ok) {
+          const mocks = await mocksRes.json();
+          const active = mocks.filter(
+            (m: any) => m.isActive && (!m.expiresAt || new Date(m.expiresAt) > new Date())
+          ).length;
+          setActiveMockCount(active);
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -91,17 +116,35 @@ export default function NewMockClientPage() {
     }
   };
 
+  const plan = subscription?.plan || SubscriptionPlan.FREE;
+  const limits = getSubscriptionLimits(plan);
+  const canCreate = limits.maxActiveMocks === -1 || activeMockCount < limits.maxActiveMocks;
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Create Mock API</h1>
-        <p className="text-muted-foreground mt-1">
+        <div className="flex items-center gap-3 mb-2">
+          <h1 className="text-3xl font-bold">Create Mock API</h1>
+          <Badge variant="default" className="text-xs">
+            {plan}
+          </Badge>
+        </div>
+        <p className="text-muted-foreground">
           Configure your mock API endpoint with custom fields
         </p>
+        {!isLoading && limits.maxActiveMocks !== -1 && (
+          <p className="text-sm text-muted-foreground mt-1">
+            Active mocks: <span className="font-medium">{activeMockCount}</span> / {limits.maxActiveMocks}
+          </p>
+        )}
       </div>
 
-      {activeMockLimit && (
-        <FreeTierBadge activeMocks={activeMockLimit} />
+      {!canCreate && (
+        <UpgradePrompt
+          title="Mock Limit Reached"
+          message={`You've reached the maximum of ${limits.maxActiveMocks} active mocks on the ${plan} plan. Upgrade to Pro for unlimited mocks.`}
+          variant="banner"
+        />
       )}
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -112,6 +155,7 @@ export default function NewMockClientPage() {
             onFormDataChange={setFormData}
             onPresetChange={handlePresetChange}
             selectedPreset={selectedPreset}
+            plan={plan}
           />
 
           <MockFormResponseConfig
@@ -129,7 +173,7 @@ export default function NewMockClientPage() {
             onRefresh={() => updatePreview()}
             onSubmit={() => handleSubmit}
             onCancel={() => router.back()}
-            isSubmitting={isSubmitting || (activeMockLimit?.current ?? 0) >= (activeMockLimit?.limit ?? 5)}
+            isSubmitting={isSubmitting || !canCreate}
             fieldsCount={fields.length}
             submitLabel="Create Mock API"
           />

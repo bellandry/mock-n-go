@@ -9,7 +9,7 @@ import {
   useSession
 } from "@/lib/auth-client";
 import { MockConfig } from "@/types/mock";
-import { Activity, ArrowRight, Clock, Loader2, Plus, Users, Zap } from "lucide-react";
+import { Activity, ArrowRight, Clock, Crown, Loader2, Plus, Zap } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 
@@ -21,6 +21,8 @@ export default function DashboardClientPage() {
   const [mockStats, setMockStats] = React.useState({ activeMocks: 0, totalCalls: 0 });
   const [isMocksLoading, setIsMocksLoading] = React.useState(false);
   const [recentMocks, setRecentMocks] = React.useState<MockConfig[]>([]);
+  const [subscription, setSubscription] = React.useState<any>(null);
+  const [isSubscriptionLoading, setIsSubscriptionLoading] = React.useState(false);
 
   React.useEffect(() => {
     if (activeOrg?.id) {
@@ -54,6 +56,14 @@ export default function DashboardClientPage() {
         })
         .catch(err => console.error("Error fetching mocks:", err))
         .finally(() => setIsMocksLoading(false));
+
+      // Fetch subscription info
+      setIsSubscriptionLoading(true);
+      fetch("/api/subscription")
+        .then(res => res.json())
+        .then(data => setSubscription(data))
+        .catch(err => console.error("Error fetching subscription:", err))
+        .finally(() => setIsSubscriptionLoading(false));
     }
   }, [activeOrg?.id]);
 
@@ -129,29 +139,37 @@ export default function DashboardClientPage() {
           </div>
         </Card>
 
-        <Card className="p-6 bg-white/5 backdrop-blur-sm border-white/10">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-primary/20">
-              <Users className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Team Members</p>
-              <p className="text-2xl font-bold">
-                {isMembersLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                ) : (
-                  memberCount ?? 1
+        <Link href="/dashboard/subscription" className="block">
+          <Card className="p-6 bg-white/5 backdrop-blur-sm border-white/10 hover:border-primary/50 transition-colors cursor-pointer">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-primary/20">
+                <Crown className="w-6 h-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">Current Plan</p>
+                <p className="text-2xl font-bold">
+                  {isSubscriptionLoading ? (
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  ) : (
+                    subscription?.plan || "FREE"
+                  )}
+                </p>
+                {subscription?.isTrialing && subscription?.trialDaysRemaining > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {subscription.trialDaysRemaining} days trial left
+                  </p>
                 )}
-              </p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-muted-foreground" />
             </div>
-          </div>
-        </Card>
+          </Card>
+        </Link>
       </div>
 
       {/* Quick Actions */}
       <Card className="p-6 bg-white/5 backdrop-blur-sm border-white/10">
-        <h2 className="text-xl font-semibold">Quick Actions</h2>
-        <div className="flex gap-3">
+        <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+        <div className="flex flex-wrap gap-3">
           <Link href="/dashboard/mocks/new">
             <Button>
               <Plus className="w-4 h-4" />
@@ -161,6 +179,12 @@ export default function DashboardClientPage() {
           <Link href="/dashboard/mocks">
             <Button variant="outline">
               View All Mocks
+            </Button>
+          </Link>
+          <Link href="/dashboard/subscription">
+            <Button variant="outline">
+              <Crown className="w-4 h-4" />
+              Manage Subscription
             </Button>
           </Link>
         </div>
