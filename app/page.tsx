@@ -9,13 +9,25 @@ import { TestimonialsSection } from "@/components/landing/testimonials-section";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Mock'n'Go - Instant REST API Mock Generator",
+  title: "Mock'n Go - Instant REST API Mock Generator",
   description: "Create realistic REST API mocks instantly. No configuration, no setup. Perfect for frontend development, testing, and prototyping. Generate mock APIs in seconds with pagination, realistic data, and full REST support.",
   openGraph: {
-    title: "Mock'n'Go - Instant REST API Mock Generator",
+    title: "Mock'n Go - Instant REST API Mock Generator",
     description: "Create realistic REST API mocks instantly. No configuration, no setup. Perfect for frontend development, testing, and prototyping.",
     url: "https://mngo.laclass.dev",
     type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Mock'n Go - Create realistic REST API mocks instantly",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og-image.png"],
   },
 };
 
