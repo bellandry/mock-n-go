@@ -1,5 +1,6 @@
 import { LandingFooter } from "@/components/landing/footer";
 import { LandingNavbar } from "@/components/landing/navbar";
+import { CheckoutButton } from "@/components/subscription/checkout-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, X } from "lucide-react";
@@ -152,15 +153,26 @@ export default function PricingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <Link href={plan.href} className="w-full">
-                    <Button
-                      className="w-full"
+                  {plan.name === "Starter" ? (
+                    <Link href={plan.href} className="w-full">
+                      <Button
+                        className="w-full"
+                        variant={plan.popular ? "default" : "outline"}
+                        size="lg"
+                      >
+                        {plan.cta}
+                      </Button>
+                    </Link>
+                  ) : (
+                    <CheckoutButton
+                      plan={plan.name === "Pro" ? "PRO" : "TEAM"}
                       variant={plan.popular ? "default" : "outline"}
                       size="lg"
+                      className="w-full"
                     >
                       {plan.cta}
-                    </Button>
-                  </Link>
+                    </CheckoutButton>
+                  )}
                 </CardFooter>
               </Card>
               </div>

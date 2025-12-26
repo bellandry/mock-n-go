@@ -39,9 +39,14 @@ export async function GET(
       );
     }
 
+    // Get organization subscription to determine plan
+    const { getOrganizationSubscription, getEffectivePlan } = await import("@/lib/subscription-helpers");
+    const subscription = await getOrganizationSubscription(mockConfig.organizationId);
+    const effectivePlan = getEffectivePlan(subscription);
+    
     // Check rate limit (100 requests/day for free tier - applies to entire mock)
     const rateLimit = await checkRateLimit(mockConfig.id);
-    const headers = updateHeaders(rateLimit);
+    const headers = updateHeaders(rateLimit, effectivePlan);
 
     // Check if mock has expired
     if (mockConfig.expiresAt && new Date() > mockConfig.expiresAt) {
@@ -108,9 +113,14 @@ export async function PUT(
       );
     }
 
+    // Get organization subscription to determine plan
+    const { getOrganizationSubscription, getEffectivePlan } = await import("@/lib/subscription-helpers");
+    const subscription = await getOrganizationSubscription(mockConfig.organizationId);
+    const effectivePlan = getEffectivePlan(subscription);
+
     // Check rate limit (100 requests/day for free tier - applies to entire mock)
     const rateLimit = await checkRateLimit(mockConfig.id);
-    const headers = updateHeaders(rateLimit);
+    const headers = updateHeaders(rateLimit, effectivePlan);
 
     // Check if mock has expired
     if (mockConfig.expiresAt && new Date() > mockConfig.expiresAt) {
@@ -203,9 +213,14 @@ export async function PATCH(
       );
     }
 
+    // Get organization subscription to determine plan
+    const { getOrganizationSubscription, getEffectivePlan } = await import("@/lib/subscription-helpers");
+    const subscription = await getOrganizationSubscription(mockConfig.organizationId);
+    const effectivePlan = getEffectivePlan(subscription);
+
     // Check rate limit (100 requests/day for free tier - applies to entire mock)
     const rateLimit = await checkRateLimit(mockConfig.id);
-    const headers = updateHeaders(rateLimit);
+    const headers = updateHeaders(rateLimit, effectivePlan);
 
     // Check if mock has expired
     if (mockConfig.expiresAt && new Date() > mockConfig.expiresAt) {
@@ -298,9 +313,14 @@ export async function DELETE(
       );
     }
 
+    // Get organization subscription to determine plan
+    const { getOrganizationSubscription, getEffectivePlan } = await import("@/lib/subscription-helpers");
+    const subscription = await getOrganizationSubscription(mockConfig.organizationId);
+    const effectivePlan = getEffectivePlan(subscription);
+
     // Check rate limit (100 requests/day for free tier - applies to entire mock)
     const rateLimit = await checkRateLimit(mockConfig.id);
-    const headers = updateHeaders(rateLimit);
+    const headers = updateHeaders(rateLimit, effectivePlan);
 
     // Check if mock has expired
     if (mockConfig.expiresAt && new Date() > mockConfig.expiresAt) {

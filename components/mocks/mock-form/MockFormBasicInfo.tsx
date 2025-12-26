@@ -2,15 +2,17 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { PRESETS } from "@/lib/presets";
+import { getSubscriptionLimits } from "@/lib/subscription-limits";
+import { SubscriptionPlan } from "@prisma/client";
 
 interface MockFormBasicInfoProps {
   formData: {
@@ -23,6 +25,7 @@ interface MockFormBasicInfoProps {
   onPresetChange?: (presetName: string | null) => void;
   selectedPreset?: string;
   isEditMode?: boolean;
+  plan?: SubscriptionPlan;
 }
 
 export function MockFormBasicInfo({
@@ -31,6 +34,7 @@ export function MockFormBasicInfo({
   onPresetChange,
   selectedPreset,
   isEditMode = false,
+  plan = SubscriptionPlan.FREE,
 }: MockFormBasicInfoProps) {
   const handleNameChange = (name: string) => {
     onFormDataChange({
@@ -42,6 +46,14 @@ export function MockFormBasicInfo({
     });
   };
 
+  const limits = getSubscriptionLimits(plan);
+  const maxMocksText = limits.maxActiveMocks === -1 ? "unlimited" : limits.maxActiveMocks;
+  const durationText = limits.mockExpirationHours 
+    ? `${limits.mockExpirationHours}h` 
+    : limits.mockExpirationDays 
+    ? `${limits.mockExpirationDays} days` 
+    : "unlimited";
+
   return (
     <Card className="p-6 bg-white/5 backdrop-blur-sm border-white/10">
       <h2 className="text-xl font-semibold">Basic Information</h2>
@@ -49,7 +61,7 @@ export function MockFormBasicInfo({
       {!isEditMode && (
         <div className="p-3 dark:bg-indigo-500/10 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
           <p className="text-sm dark:text-indigo-200 text-indigo-500">
-            <strong>Free Tier:</strong> Mocks automatically expire after 24 hours. You can have up to 5 active mocks simultaneously.
+            <strong>{plan} Plan:</strong> Mocks expire after {durationText}. You can have up to {maxMocksText} active mocks simultaneously.
           </p>
         </div>
       )}

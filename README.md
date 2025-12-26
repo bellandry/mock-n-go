@@ -19,7 +19,10 @@ Mock'n Go is a powerful SaaS platform that allows developers to generate realist
 - 🔐 **Secure & Reliable** - Rate limiting, expiration controls, and organization-based access
 - 🌐 **Instant Deployment** - Your mock API is live instantly with a unique URL
 - 📱 **Responsive Dashboard** - Manage all your mocks from a beautiful interface
-- 👥 **Team Collaboration** - Share mocks with your team (Pro/Team plans)
+- 👥 **Team Collaboration** - Share mocks with your team (Team plan)
+- 💳 **Flexible Subscriptions** - Free, Pro, and Team plans with Dodo Payments
+- 📤 **Export Options** - Export to MSW, Postman, or OpenAPI (Pro/Team)
+- 🎨 **Beautiful UI** - Modern, responsive design with dark mode
 
 ---
 
@@ -39,12 +42,15 @@ Mock'n Go is a powerful SaaS platform that allows developers to generate realist
 - **PostgreSQL** - Production database
 - **Better Auth** - Authentication & authorization
 - **Faker.js** - Realistic data generation
+- **Dodo Payments** - Subscription & payment processing
+- **Svix** - Webhook signature verification
 
 ### **Infrastructure**
 - **Vercel** - Hosting & deployment
 - **Uploadthing** - File uploads
 - **Nodemailer** - Email notifications
 - **React Email** - Beautiful email templates
+- **Dodo Payments** - Payment infrastructure
 
 ---
 
@@ -96,6 +102,12 @@ EMAIL_PORT="587"
 EMAIL_USER="your-email@gmail.com"
 EMAIL_PASSWORD="your-app-password"
 EMAIL_FROM="Mock'n Go <noreply@mngo.laclass.dev>"
+
+# Dodo Payments (Subscription Management)
+DODO_PAYMENTS_API_KEY="your-dodo-api-key"
+DODO_WEBHOOK_KEY="whsec_your-webhook-secret"
+DODO_PRO_PRODUCT_ID="pdt_your-pro-product-id"
+DODO_TEAM_PRODUCT_ID="pdt_your-team-product-id"
 
 # App
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
@@ -158,9 +170,39 @@ Create a mock API by defining:
 
 ### **Subscription Plans**
 
-- **Free**: 5 active mocks, 24h duration, 100 requests/day
-- **Pro**: Unlimited mocks, 30 days duration, unlimited requests
-- **Team**: Everything in Pro + team collaboration + unlimited duration
+Mock'n Go offers three tiers to fit your needs:
+
+#### **Free (Starter)**
+- ✅ 5 active mocks
+- ✅ 24-hour mock duration
+- ✅ 100 requests per day per mock
+- ✅ All HTTP methods (GET, POST, PUT, PATCH, DELETE)
+- ✅ Pagination & error simulation
+- ❌ No GraphQL support
+- ❌ No export features
+- ❌ No team collaboration
+
+#### **Pro - $9/month**
+- ✅ **Unlimited** active mocks
+- ✅ 30-day mock duration
+- ✅ **Unlimited** requests
+- ✅ All HTTP methods
+- ✅ GraphQL support
+- ✅ Export to MSW, Postman, OpenAPI
+- ✅ Priority support
+- ✅ 14-day free trial
+- ❌ No team collaboration
+
+#### **Team - $29/user/month**
+- ✅ **Everything in Pro**
+- ✅ **Unlimited** mock duration
+- ✅ Team collaboration
+- ✅ Shared workspaces
+- ✅ Version control
+- ✅ Priority support (<24h)
+- ✅ Custom onboarding
+
+> **Payment Processing**: Powered by [Dodo Payments](https://dodopayments.com) for secure, reliable subscription management.
 
 ### **Authentication**
 
@@ -234,6 +276,8 @@ This project is licensed under the MIT License.
 - [Faker.js](https://fakerjs.dev/) - Generate massive amounts of fake data
 - [shadcn/ui](https://ui.shadcn.com/) - Beautiful UI components
 - [Vercel](https://vercel.com/) - Hosting & deployment
+- [Dodo Payments](https://dodopayments.com/) - Payment infrastructure
+- [Svix](https://www.svix.com/) - Webhook infrastructure
 
 ---
 

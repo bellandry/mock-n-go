@@ -50,9 +50,9 @@ export const metadata: Metadata = {
     "mock rest api",
     "instant api",
   ],
-  authors: [{ name: "Landry Bella" }],
+  authors: [{ name: "Landry Bella", url: "https://laclass.dev" }],
   creator: "Landry Bella",
-  publisher: "Landry Bella",
+  publisher: "Laclass Dev",
   robots: {
     index: true,
     follow: true,
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
     description: siteDescription,
     images: [
       {
-        url: `${siteUrl}/og-image.png`,
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: `${siteName} - Create realistic REST API mocks instantly`,
