@@ -6,12 +6,14 @@ import { MockBaseUrl } from "@/components/mocks/mock-detail/MockBaseUrl";
 import { MockHeader } from "@/components/mocks/mock-detail/MockHeader";
 import { MockMetadata } from "@/components/mocks/mock-detail/MockMetadata";
 import { MockStatistics } from "@/components/mocks/mock-detail/MockStatistics";
+import { MockExportOptions } from "@/components/mocks/mock-export-options";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toastManager } from "@/components/ui/toast";
 import { getMethodColor, HTTP_METHODS } from "@/lib/http-methods";
 import { Field, MockConfig } from "@/types/mock";
+import { SubscriptionPlan } from "@prisma/client";
 import { Loader2, Settings } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -23,10 +25,12 @@ export default function MockDetailClientPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [subscription, setSubscription] = useState<any>(null);
 
   useEffect(() => {
     if (params.id) {
       fetchMock();
+      fetchSubscription();
     }
   }, [params.id]);
 
@@ -44,6 +48,18 @@ export default function MockDetailClientPage() {
       console.error("Error fetching mock:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchSubscription = async () => {
+    try {
+      const res = await fetch("/api/subscription");
+      if (res.ok) {
+        const data = await res.json();
+        setSubscription(data);
+      }
+    } catch (error) {
+      console.error("Error fetching subscription:", error);
     }
   };
 
@@ -123,6 +139,14 @@ export default function MockDetailClientPage() {
           createdAt={mock.createdAt}
           lastAccessedAt={mock.lastAccessedAt}
         />
+
+        {/* Export Options */}
+        {subscription && (
+          <MockExportOptions
+            mockId={mock.id}
+            plan={subscription.plan || SubscriptionPlan.FREE}
+          />
+        )}
 
         {/* Endpoints Documentation */}
         <Card className="p-6 bg-white/5 backdrop-blur-sm border-white/10">

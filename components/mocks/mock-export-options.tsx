@@ -52,7 +52,7 @@ export function MockExportOptions({ mockId, plan }: MockExportOptionsProps) {
         )}
       </div>
 
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3">
         {exportOptions.map((option) => {
           const Icon = option.icon;
           
