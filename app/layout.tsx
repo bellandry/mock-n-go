@@ -103,7 +103,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={outfit.variable} suppressHydrationWarning>
-      <head>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
+      >
         {/* Structured Data - Organization */}
         <script
           type="application/ld+json"
@@ -129,11 +132,6 @@ export default function RootLayout({
             }),
           }}
         />
-      </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        suppressHydrationWarning
-      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
