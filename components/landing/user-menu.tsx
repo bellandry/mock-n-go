@@ -1,35 +1,42 @@
 import { useSession } from "@/lib/auth-client"
+import { User } from "better-auth"
 import { signOut } from "better-auth/api"
-import { FileText, LayoutDashboard, LogOut, User } from "lucide-react"
+import { FileText, LayoutDashboard, LogOut, User as UserIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useEffect, useState } from "react"
 import { Button } from "../ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu"
 
 export const UserMenu = () => {
+  const [user, setUser] = useState<User | undefined>(undefined)
   const { data: session } = useSession()
 
+  useEffect(() => {
+    setUser(session?.user)
+  }, [session])
+
   return (
-    session?.user ? (
+    user ? (
     <>
       {/* User Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors outline-none cursor-pointer">
-          {session.user.image ? (
+          {user.image ? (
             <Image
-              src={session.user.image}
-              alt={session.user.name || "User"}
+              src={user.image}
+              alt={user.name || "User"}
               width={32}
               height={32}
               className="rounded-full aspect-square object-cover"
             />
           ) : (
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-semibold">
-              {session.user.name?.charAt(0).toUpperCase() || "U"}
+              {user.name?.charAt(0).toUpperCase() || "U"}
             </div>
           )}
           <span className="text-sm font-medium">
-            {session.user.name || "User"}
+            {user.name || "User"}
           </span>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" sideOffset={8}>
@@ -37,10 +44,10 @@ export const UserMenu = () => {
             <DropdownMenuLabel className="font-normal px-3 py-2">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">
-                  {session.user.name}
+                  {user.name}
                 </p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {session.user.email}
+                  {user.email}
                 </p>
               </div>
             </DropdownMenuLabel>
@@ -68,7 +75,7 @@ export const UserMenu = () => {
                 href="/dashboard/profile"
                 className="flex items-center w-full px-3 py-2 cursor-pointer outline-none"
               >
-                <User className="mr-2 h-4 w-4" />
+                <UserIcon className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </Link>
             </DropdownMenuItem>
@@ -76,7 +83,10 @@ export const UserMenu = () => {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className="text-destructive focus:text-destructive cursor-pointer px-3 py-2"
-            onClick={() => signOut()}
+            onClick={() => {
+              signOut()
+              setUser(undefined)
+            }}
           >
             <LogOut className="mr-2 h-4 w-4" />
             <span>Log out</span>
