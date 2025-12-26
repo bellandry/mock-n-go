@@ -63,7 +63,7 @@ export function createDodoClient() {
 
   const client = new DodoPayments({
     bearerToken: apiKey,
-    environment: 'test_mode',
+    environment: process.env.DODO_ENVIRONMENT as 'live_mode' | 'test_mode',
     webhookKey: process.env.DODO_WEBHOOK_KEY,
   });
 
