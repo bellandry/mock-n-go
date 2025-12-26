@@ -64,15 +64,16 @@ export async function handlePaymentCompleted(event: any) {
  * This event is triggered when a new subscription is created
  */
 export async function handleSubscriptionCreated(event: any) {
-  // console.log('Subscription created:', event.data);
+  console.log('Subscription created:', event.data);
   
   const {
     subscription_id,
     customer_id,
     product_id,
     status,
-    current_period_start,
-    current_period_end,
+    created_at,
+    next_billing_date,
+    trial_period_days,
     metadata,
   } = event.data;
 
@@ -88,23 +89,23 @@ export async function handleSubscriptionCreated(event: any) {
   const plan = mapDodoPlanToInternal(product_id);
   const internalStatus = mapDodoStatusToInternal(status);
 
-  // Handle dates - if not provided, calculate them
-  const now = new Date();
-  const periodStart = current_period_start ? new Date(current_period_start) : now;
+  // Use created_at as period start, or current time if not provided
+  const periodStart = created_at ? new Date(created_at) : new Date();
   
-  // Dodo Payments adds 14 days trial by default
-  // If no end date provided, set it to 14 days from start
-  let periodEnd: Date;
-  if (current_period_end) {
-    periodEnd = new Date(current_period_end);
-  } else {
-    periodEnd = new Date(periodStart);
-    periodEnd.setDate(periodEnd.getDate() + 14); // 14 days trial
-  }
-
-  // Determine if this is a trial
-  const isTrialing = status === 'trialing' || !current_period_end;
-  const trialEndsAt = isTrialing ? periodEnd : null;
+  // Determine if subscription has a trial period
+  const hasTrial = trial_period_days && trial_period_days > 0;
+  
+  // For trial subscriptions, the trial ends at next_billing_date
+  // For non-trial, currentPeriodEnd is next_billing_date
+  const nextBillingDate = next_billing_date ? new Date(next_billing_date) : null;
+  
+  // Set trial status based on trial_period_days and current time
+  const now = new Date();
+  const isTrialing = hasTrial && nextBillingDate && now < nextBillingDate;
+  const trialEndsAt = isTrialing && nextBillingDate ? nextBillingDate : null;
+  
+  // Current period end is the next billing date
+  const periodEnd = nextBillingDate || new Date(periodStart.getTime() + 30 * 24 * 60 * 60 * 1000); // Default 30 days
 
   // Create or update subscription
   await db.subscription.upsert({
@@ -134,7 +135,89 @@ export async function handleSubscriptionCreated(event: any) {
     },
   });
 
-  console.log(`Subscription created/updated for organization ${organizationId}`);
+  console.log(`Subscription created/updated for organization ${organizationId}, trial: ${isTrialing}, trial ends: ${trialEndsAt}`);
+  return { success: true };
+}
+
+/**
+ * Handle subscription.active event
+ * This event is triggered when a subscription becomes active (including during trial)
+ */
+export async function handleSubscriptionActive(event: any) {
+  console.log('Subscription active:', event.data);
+  
+  const {
+    subscription_id,
+    customer_id,
+    product_id,
+    status,
+    created_at,
+    next_billing_date,
+    previous_billing_date,
+    trial_period_days,
+    metadata,
+  } = event.data;
+
+  // Get organization ID from metadata
+  const organizationId = metadata?.organization_id;
+  
+  if (!organizationId) {
+    console.error('No organization_id in subscription metadata');
+    return { success: false, error: 'Missing organization_id' };
+  }
+
+  // Map Dodo Payments data to our internal format
+  const plan = mapDodoPlanToInternal(product_id);
+  const internalStatus = SubscriptionStatus.ACTIVE; // Force ACTIVE status
+
+  // Use previous_billing_date or created_at as period start
+  const periodStart = previous_billing_date 
+    ? new Date(previous_billing_date) 
+    : (created_at ? new Date(created_at) : new Date());
+  
+  // Determine if subscription has a trial period
+  const hasTrial = trial_period_days && trial_period_days > 0;
+  
+  // For trial subscriptions, the trial ends at next_billing_date
+  const nextBillingDate = next_billing_date ? new Date(next_billing_date) : null;
+  
+  // Set trial status based on trial_period_days and current time
+  const now = new Date();
+  const isTrialing = hasTrial && nextBillingDate && now < nextBillingDate;
+  const trialEndsAt = isTrialing && nextBillingDate ? nextBillingDate : null;
+  
+  // Current period end is the next billing date
+  const periodEnd = nextBillingDate || new Date(periodStart.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+  // Create or update subscription
+  await db.subscription.upsert({
+    where: { organizationId },
+    create: {
+      organizationId,
+      plan,
+      status: internalStatus,
+      dodoCustomerId: customer_id,
+      dodoSubscriptionId: subscription_id,
+      dodoProductId: product_id,
+      currentPeriodStart: periodStart,
+      currentPeriodEnd: periodEnd,
+      isTrialing,
+      trialEndsAt,
+    },
+    update: {
+      plan,
+      status: internalStatus,
+      dodoCustomerId: customer_id,
+      dodoSubscriptionId: subscription_id,
+      dodoProductId: product_id,
+      currentPeriodStart: periodStart,
+      currentPeriodEnd: periodEnd,
+      isTrialing,
+      trialEndsAt,
+    },
+  });
+
+  console.log(`Subscription active for organization ${organizationId}, trial: ${isTrialing}, trial ends: ${trialEndsAt}`);
   return { success: true };
 }
 
@@ -147,8 +230,8 @@ export async function handleSubscriptionRenewed(event: any) {
   
   const {
     subscription_id,
-    current_period_start,
-    current_period_end,
+    previous_billing_date,
+    next_billing_date,
     status,
   } = event.data;
 
@@ -166,10 +249,11 @@ export async function handleSubscriptionRenewed(event: any) {
   await db.subscription.update({
     where: { id: subscription.id },
     data: {
-      currentPeriodStart: new Date(current_period_start),
-      currentPeriodEnd: new Date(current_period_end),
+      currentPeriodStart: previous_billing_date ? new Date(previous_billing_date) : subscription.currentPeriodStart,
+      currentPeriodEnd: next_billing_date ? new Date(next_billing_date) : subscription.currentPeriodEnd,
       status: mapDodoStatusToInternal(status),
       isTrialing: false, // Renewal means trial is over
+      trialEndsAt: null, // Clear trial end date
     },
   });
 
@@ -188,8 +272,9 @@ export async function handleSubscriptionUpdated(event: any) {
     subscription_id,
     product_id,
     status,
-    current_period_start,
-    current_period_end,
+    previous_billing_date,
+    next_billing_date,
+    trial_period_days,
   } = event.data;
 
   // Find subscription by Dodo subscription ID
@@ -205,18 +290,27 @@ export async function handleSubscriptionUpdated(event: any) {
   // Update subscription
   const plan = mapDodoPlanToInternal(product_id);
   
+  // Determine trial status
+  const hasTrial = trial_period_days && trial_period_days > 0;
+  const nextBillingDate = next_billing_date ? new Date(next_billing_date) : null;
+  const now = new Date();
+  const isTrialing = hasTrial && nextBillingDate && now < nextBillingDate;
+  const trialEndsAt = isTrialing && nextBillingDate ? nextBillingDate : null;
+  
   await db.subscription.update({
     where: { id: subscription.id },
     data: {
       plan,
       status: mapDodoStatusToInternal(status),
       dodoProductId: product_id,
-      currentPeriodStart: current_period_start ? new Date(current_period_start) : undefined,
-      currentPeriodEnd: current_period_end ? new Date(current_period_end) : undefined,
+      currentPeriodStart: previous_billing_date ? new Date(previous_billing_date) : undefined,
+      currentPeriodEnd: nextBillingDate || undefined,
+      isTrialing,
+      trialEndsAt,
     },
   });
 
-  console.log(`Subscription updated: ${subscription_id}`);
+  console.log(`Subscription updated: ${subscription_id}, trial: ${isTrialing}`);
   return { success: true };
 }
 

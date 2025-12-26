@@ -1,9 +1,10 @@
 import {
   handlePaymentCompleted,
+  handleSubscriptionActive,
   handleSubscriptionCanceled,
   handleSubscriptionCreated,
   handleSubscriptionRenewed,
-  handleSubscriptionUpdated,
+  handleSubscriptionUpdated
 } from "@/lib/webhooks/dodo-handlers";
 import { NextRequest, NextResponse } from "next/server";
 import { Webhook } from "svix";
@@ -83,8 +84,11 @@ export async function POST(req: NextRequest) {
         break;
         
       case 'subscription.created':
-      case 'subscription.active':
         result = await handleSubscriptionCreated(event);
+        break;
+        
+      case 'subscription.active':
+        result = await handleSubscriptionActive(event);
         break;
         
       case 'subscription.renewed':
