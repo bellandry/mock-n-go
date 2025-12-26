@@ -9,9 +9,11 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+    
     const session = await auth.api.getSession({
       headers: await headers(),
     });
@@ -31,7 +33,7 @@ export async function GET(
     // Fetch mock with endpoints
     const mock = await db.mockConfig.findUnique({
       where: {
-        id: params.id,
+        id,
         organizationId: activeOrganizationId,
       },
       include: {
@@ -45,7 +47,7 @@ export async function GET(
 
     // Generate OpenAPI spec
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
-    const mockUrl = `${baseUrl}/api/mock/${mock.id}/${mock.basePath}`;
+    const mockUrl = `${baseUrl}/api/mock/${id}/${mock.basePath}`;
 
     // Map Faker types to OpenAPI types
     const mapTypeToOpenAPI = (fakerType: string) => {
