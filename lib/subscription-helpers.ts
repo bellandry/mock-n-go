@@ -46,23 +46,45 @@ export function getEffectivePlan(subscription: {
 }
 
 /**
- * Create custom Headers
+ * Create custom Headers based on subscription plan
  */
-export function updateHeaders(rateLimit: {
+export function updateHeaders(
+  rateLimit: {
     allowed: boolean;
     current: number;
     limit: number;
     resetsAt?: Date | undefined;
-}) {
+  },
+  plan: SubscriptionPlan = SubscriptionPlan.FREE
+) {
   const headers = new Headers();
-  headers.set("X-Powered-By", "Mock-n-Go Free Tier");
+  
+  // Set X-Powered-By based on subscription plan
+  switch (plan) {
+    case SubscriptionPlan.TEAM:
+      headers.set("X-Powered-By", "Mock'n'Go Team");
+      break;
+    case SubscriptionPlan.PRO:
+      headers.set("X-Powered-By", "Mock'n'Go Pro");
+      break;
+    case SubscriptionPlan.FREE:
+    default:
+      headers.set("X-Powered-By", "Mock'n'Go Free Tier");
+      break;
+  }
+  
+  // Set rate limit headers
   headers.set("X-RateLimit-Limit", rateLimit.limit.toString());
   headers.set("X-RateLimit-Reset", rateLimit.resetsAt?.toISOString() || "");
   headers.set(
     "X-RateLimit-Remaining",
     Math.max(0, rateLimit.limit - rateLimit.current - 1).toString()
   );
-  return headers
+  
+  // Add subscription tier header for API consumers
+  headers.set("X-Subscription-Tier", plan);
+  
+  return headers;
 }
 
 export function updateEndpointCount(mockConfigId: string, endpoint?: MockEndpoint) {

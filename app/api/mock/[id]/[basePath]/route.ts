@@ -47,11 +47,16 @@ export async function GET(
       );
     }
 
+    // Get organization subscription to determine plan
+    const { getOrganizationSubscription, getEffectivePlan } = await import("@/lib/subscription-helpers");
+    const subscription = await getOrganizationSubscription(mockConfig.organizationId);
+    const effectivePlan = getEffectivePlan(subscription);
+
     // Check rate limit (100 requests/day for free tier - applies to entire mock)
     const rateLimit = await checkRateLimit(mockConfig.id);
 
-    // Add headers
-    const headers = updateHeaders(rateLimit)
+    // Add headers with subscription plan
+    const headers = updateHeaders(rateLimit, effectivePlan)
 
     const endpoint = mockConfig.endpoints[0];
 
@@ -202,9 +207,14 @@ export async function POST(
       );
     }
     
+    // Get organization subscription to determine plan
+    const { getOrganizationSubscription, getEffectivePlan } = await import("@/lib/subscription-helpers");
+    const subscription = await getOrganizationSubscription(mockConfig.organizationId);
+    const effectivePlan = getEffectivePlan(subscription);
+
     // Check rate limit (100 requests/day for free tier - applies to entire mock)
     const rateLimit = await checkRateLimit(mockConfig.id);
-    const headers = updateHeaders(rateLimit);
+    const headers = updateHeaders(rateLimit, effectivePlan);
 
     const endpoint = mockConfig.endpoints[0];
 
