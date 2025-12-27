@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar";
+import { OAuthCallbackHandler } from "@/components/auth/oauth-callback-handler";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -20,7 +21,9 @@ export default async function DashboardLayout({
   });
 
   if (!session?.user) {
-    redirect("/sign-in");
+    const headersList = await headers();
+    const pathname = headersList.get("x-pathname") || "/dashboard";
+    redirect(`/sign-in?callbackUrl=${encodeURIComponent(pathname)}`);
   }
 
   const { user } = session;
@@ -34,6 +37,7 @@ export default async function DashboardLayout({
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
+        <OAuthCallbackHandler />
         <header className="flex sticky border-b bg-white/10 z-10 w-full backdrop-blur-md top-0 h-16 shrink items-center justify-between gap-2 px-2">
           <div className="flex flex-1 py-2 items-center gap-3 px-4">
             <SidebarTrigger className="-ml-1" />

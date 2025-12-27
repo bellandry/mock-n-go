@@ -8,12 +8,18 @@ export async function proxy(request: NextRequest) {
   });
 
   if (!session) {
-    return NextResponse.redirect(new URL("/sign-in", request.url));
+    const signInUrl = new URL("/sign-in", request.url);
+    signInUrl.searchParams.set("callbackUrl", request.nextUrl.pathname + request.nextUrl.search);
+    return NextResponse.redirect(signInUrl);
   }
 
-  return NextResponse.next();
+  // Add pathname to headers so it's available in Server Components
+  const response = NextResponse.next();
+  response.headers.set("x-pathname", request.nextUrl.pathname);
+  
+  return response;
 }
 
 export const config = {
-  matcher: ["/dashboard"], // Specify the routes the middleware applies to
+  matcher: ["/dashboard/:path*"], // Apply to all dashboard routes
 };

@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 import { toastManager } from "./ui/toast";
 
@@ -40,6 +41,7 @@ export function WorkplaceSwitcher() {
   const { data: activeOrg, isPending: isActivePending } = useActiveOrganization();
   const { data: organizations, isPending: isListPending } = useListOrganizations();
   const { data: session } = useSession();
+  const router = useRouter();
   
   const [isCreating, setIsCreating] = React.useState(false);
   const [newOrgName, setNewOrgName] = React.useState("");
@@ -232,7 +234,10 @@ export function WorkplaceSwitcher() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => signOut()}
+                onClick={() => {
+                  signOut()
+                  router.push('/')
+                }}
                 className="gap-2 p-2 text-destructive focus:text-destructive focus:bg-destructive/10"
               >
                 <LogOut className="size-4" />

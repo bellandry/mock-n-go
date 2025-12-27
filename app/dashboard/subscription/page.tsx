@@ -3,6 +3,7 @@ import { SubscriptionStatus } from "@/components/subscription/subscription-statu
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
+import db from "@/lib/prisma";
 import { getEffectivePlan, getOrganizationSubscription, getTrialDaysRemaining } from "@/lib/subscription-helpers";
 import { ArrowLeft } from "lucide-react";
 import { headers } from "next/headers";
@@ -16,12 +17,32 @@ export default async function SubscriptionPage() {
   });
 
   if (!session?.user || !session?.session) {
-    redirect("/sign-in");
+    redirect("/sign-in?callbackUrl=%2Fdashboard%2Fsubscription");
   }
 
-  const activeOrganizationId = session.session.activeOrganizationId;
+  let activeOrganizationId = session.session.activeOrganizationId;
+  
+  // If no active organization, try to set one automatically
   if (!activeOrganizationId) {
-    redirect("/dashboard");
+    // Find user's first organization
+    const userMembership = await db.member.findFirst({
+      where: { userId: session.user.id },
+      include: { organization: true },
+    });
+
+    if (userMembership) {
+      // Set this organization as active
+      await auth.api.setActiveOrganization({
+        headers: await headers(),
+        body: {
+          organizationId: userMembership.organizationId,
+        },
+      });
+      activeOrganizationId = userMembership.organizationId;
+    } else {
+      // User has no organizations, redirect to dashboard
+      redirect("/dashboard");
+    }
   }
 
   // Get subscription details

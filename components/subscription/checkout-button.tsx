@@ -1,18 +1,18 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/auth-client";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "../ui/button";
 import { toastManager } from "../ui/toast";
 
 interface CheckoutButtonProps {
   plan: "PRO" | "TEAM";
-  variant?: "default" | "outline";
-  size?: "default" | "sm" | "lg";
+  variant?: "default" | "outline" | "destructive" | "secondary" | "ghost" | "link";
+  size?: "default" | "sm" | "lg" | "icon";
   className?: string;
-  children?: React.ReactNode;
+  children: React.ReactNode;
 }
 
 export function CheckoutButton({
@@ -22,20 +22,21 @@ export function CheckoutButton({
   className,
   children = "Get started",
 }: CheckoutButtonProps) {
+  const { data: session } = useSession();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const { data: session } = useSession()
-  const router = useRouter()
 
   const handleCheckout = async () => {
+    // If not authenticated, redirect to sign-in with callback to current page
+    if (!session?.user) {
+      const currentPath = window.location.pathname;
+      router.push(`/sign-in?callbackUrl=${encodeURIComponent(currentPath)}`);
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
-      setIsLoading(true);
-
-      if (!session?.user) {
-        router.push("/sign-in");
-        return;
-      }
-
-      // Call the checkout API
       const response = await fetch("/api/subscription/checkout", {
         method: "POST",
         headers: {
@@ -44,43 +45,30 @@ export function CheckoutButton({
         body: JSON.stringify({ plan }),
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create checkout session");
-      }
-
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create checkout session");
+      }
 
       // Redirect to Dodo Payments checkout
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
-      } else {
-        throw new Error("No checkout URL returned");
       }
     } catch (error) {
       console.error("Checkout error:", error);
-      
-      // Show error to user
       toastManager.add({
-        title: "Checkout error",
-        description: error instanceof Error
-          ? error.message
-          : "Failed to start checkout. Please try again.",
         type: "error",
+        title: "Checkout Failed",
+        description: error instanceof Error ? error.message : "Failed to start checkout process",
       });
-      
+    } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Button
-      onClick={handleCheckout}
-      disabled={isLoading}
-      variant={variant}
-      size={size}
-      className={className}
-    >
+    <Button onClick={handleCheckout} disabled={isLoading} variant={variant} size={size} className={className}>
       {isLoading ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />

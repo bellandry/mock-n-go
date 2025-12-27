@@ -11,7 +11,7 @@ import { toastManager } from "../ui/toast";
 // import { Spinner } from "../ui/spinner";
 // import { toastManager } from "../ui/toast";
 
-function MailLogin({ className }: { className?: string }) {
+function MailLogin({ className, callbackUrl = "/dashboard" }: { className?: string; callbackUrl?: string }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<{ [key: string]: boolean }>({
@@ -32,7 +32,7 @@ function MailLogin({ className }: { className?: string }) {
 
       const res = await authClient.signIn.magicLink({
         email: email,
-        callbackURL: "/dashboard",
+        callbackURL: callbackUrl,
         errorCallbackURL: "/error",
       });
 
