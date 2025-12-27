@@ -9,7 +9,7 @@ import { toastManager } from "../ui/toast";
 // import { Spinner } from "../ui/spinner";
 // import { toastManager } from "../ui/toast";
 
-function SocialLogin({ className }: { className?: string }) {
+function SocialLogin({ className, callbackUrl = "/dashboard" }: { className?: string; callbackUrl?: string }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState<{ [key: string]: boolean }>({
     github: false,
@@ -22,9 +22,15 @@ function SocialLogin({ className }: { className?: string }) {
     setLoading((prev) => ({ ...prev, [provider]: true }));
 
     try {
+      // Store callbackUrl in sessionStorage before OAuth redirect
+      // This ensures it persists when user leaves our site for OAuth
+      if (callbackUrl && callbackUrl !== "/dashboard") {
+        sessionStorage.setItem("auth_callback_url", callbackUrl);
+      }
+
       const res = await authClient.signIn.social({
         provider,
-        callbackURL: "/dashboard",
+        callbackURL: callbackUrl,
         errorCallbackURL: "/error",
       });
 

@@ -1,4 +1,5 @@
 import { useSession } from "@/lib/auth-client"
+import { useSignInUrl } from "@/lib/auth-utils"
 import { User } from "better-auth"
 import { signOut } from "better-auth/api"
 import { FileText, LayoutDashboard, LogOut, User as UserIcon } from "lucide-react"
@@ -11,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 export const UserMenu = () => {
   const [user, setUser] = useState<User | undefined>(undefined)
   const { data: session } = useSession()
+  const signInUrl = useSignInUrl()
 
   useEffect(() => {
     setUser(session?.user)
@@ -96,7 +98,7 @@ export const UserMenu = () => {
     </>
     ) : (
       <>
-        <Link href="/sign-in">
+        <Link href={signInUrl}>
           <Button variant="ghost">Sign in</Button>
         </Link>
         <Link href="/dashboard">

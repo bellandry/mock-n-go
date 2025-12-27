@@ -1,13 +1,21 @@
 import { Logo } from "@/components/landing/logo";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { getCallbackUrl } from "@/lib/redirect-utils";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import MailLogin from "../../../components/auth/mail-login";
 import SocialLogin from "../../../components/auth/social-login";
 import { Card, CardDescription, CardHeader, CardTitle } from "../../../components/ui/card";
 
-export default function SignIn() {
+export default async function SignIn({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string }>;
+}) {
+  const params = await searchParams;
+  const callbackUrl = getCallbackUrl(params);
+
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-linear-to-br from-orange-700/5 via-transparent to-primary/10 px-4">
       <div className="space-y-2">
@@ -29,7 +37,7 @@ export default function SignIn() {
             <div className="flex w-full flex-col items-center gap-6">
 
               {/* Social Sign-in Buttons */}
-              <SocialLogin />
+              <SocialLogin callbackUrl={callbackUrl} />
 
               {/* Separator */}
               <Separator />
@@ -38,7 +46,7 @@ export default function SignIn() {
               </p>
 
               {/* Email Sign-in */}
-              <MailLogin />
+              <MailLogin callbackUrl={callbackUrl} />
             </div>
           </div>
           <div className="text-center text-xs text-muted-foreground pt-2">
